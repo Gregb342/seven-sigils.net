@@ -1,0 +1,6 @@
+@SevenSigils.Api_HostAddress = http://localhost:5189
+
+GET {{SevenSigils.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

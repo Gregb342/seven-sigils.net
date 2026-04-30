@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="SevenSigils.Api/SevenSigils.Api.csproj" />
+  <Project Path="SevenSigils.Application/SevenSigils.Application.csproj" />
+  <Project Path="SevenSigils.Domain/SevenSigils.Domain.csproj" />
+  <Project Path="SevenSigils.Infrastructure/SevenSigils.Infrastructure.csproj" />
+  <Project Path="SevenSigils.Tests.Integration/SevenSigils.Tests.Integration.csproj" />
+  <Project Path="SevenSigils.Tests.Unit/SevenSigils.Tests.Unit.csproj" />
+</Solution>

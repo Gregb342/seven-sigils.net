@@ -1,0 +1,22 @@
+# Build outputs
+bin/
+obj/
+dist/
+node_modules/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Secrets
+appsettings.*.json
+!appsettings.json
+
+# Test results
+TestResults/
+coverage/
+
+# Memory (documentation locale, non versionnée)
+memories/
