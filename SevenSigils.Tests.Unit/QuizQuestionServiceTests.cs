@@ -133,7 +133,7 @@ public sealed class QuizQuestionServiceTests
 
     private static Blazon Create(string id, string label) =>
         new(id, id, label, null, "https://example.test", "family", null,
-            true, [], new Attribution("evrach", "https://example.test",
+            true, true, [], new Attribution("evrach", "https://example.test",
                 "CC BY-SA 4.0", "https://creativecommons.org/licenses/by-sa/4.0/", null));
 
     private sealed class FakeRepository(params Blazon[] blazons) : IBlazonRepository
@@ -145,6 +145,22 @@ public sealed class QuizQuestionServiceTests
             cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult<IReadOnlyList<Blazon>>(blazons);
         }
+
+        public Task<(IReadOnlyList<Blazon> Items, long TotalCount)> GetAllAsync(
+            int page, int pageSize, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Blazon?> GetBySlugAsync(string familySlug, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Blazon> CreateAsync(Blazon blazon, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Blazon?> UpdateAsync(Blazon blazon, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<bool> DeleteAsync(string familySlug, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class CancellingFakeRepository : IBlazonRepository
@@ -156,6 +172,22 @@ public sealed class QuizQuestionServiceTests
             cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult<IReadOnlyList<Blazon>>(Array.Empty<Blazon>());
         }
+
+        public Task<(IReadOnlyList<Blazon> Items, long TotalCount)> GetAllAsync(
+            int page, int pageSize, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Blazon?> GetBySlugAsync(string familySlug, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Blazon> CreateAsync(Blazon blazon, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Blazon?> UpdateAsync(Blazon blazon, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<bool> DeleteAsync(string familySlug, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class FakeRandomProvider : IRandomProvider

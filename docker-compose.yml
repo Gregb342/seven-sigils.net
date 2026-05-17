@@ -1,0 +1,58 @@
+services:
+
+  # ── MongoDB ──────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── .NET API ──────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: SevenSigils.Api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - MongoDb__ConnectionString=mongodb://mongodb:27017
+      - MongoDb__DatabaseName=sevensigils
+      - MongoDb__BlazonCollection=blazons
+      - MongoDb__UserCollection=users
+      - MongoDb__SeedOnStartup=true
+      - Jwt__Key=${JWT_KEY:-CHANGE_ME_WITH_A_LONGER_SECRET_KEY_32+}
+      - Jwt__Issuer=SevenSigils
+      - Jwt__Audience=SevenSigils
+      - Jwt__ExpiryMinutes=60
+      - Cors__FrontendOrigin=http://localhost
+    ports:
+      - "5189:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # ── Frontend (Vite build → nginx) ─────────────────────────────────────────────
+  frontend:
+    build:
+      context: SevenSigils.Frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "80:80"
+
+volumes:
+  mongo_data:

@@ -1,7 +1,8 @@
-namespace SevenSigils.Domain.Models;
+using SevenSigils.Domain.Models;
 
-public sealed record Blazon(
-    string Id,
+namespace SevenSigils.Application.Admin;
+
+public sealed record CreateBlazonCommand(
     string FamilySlug,
     string FamilyLabel,
     string? DisplayName,

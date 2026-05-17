@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/.vs/
+**/*.user
+SevenSigils.Frontend/node_modules/
+SevenSigils.Frontend/dist/
+SevenSigils.Tests.Unit/
+SevenSigils.Tests.Integration/
+memories/
+.git/
