@@ -1,0 +1,18 @@
+# docker-compose.override.yml — Surcharges pour le développement local
+# Appliqué automatiquement par `docker compose up` (pas besoin de -f)
+# En production, utiliser uniquement docker-compose.yml
+
+services:
+
+  mongodb:
+    # Expose MongoDB pour les outils locaux (MongoDB Compass, mongosh…)
+    ports:
+      - "27017:27017"
+
+  api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # Pas d'auth MongoDB en dev — connexion simple
+      - MongoDb__ConnectionString=mongodb://mongodb:27017
+      # CORS ouvert sur le dev server Vite
+      - Cors__FrontendOrigin=http://localhost:5173
