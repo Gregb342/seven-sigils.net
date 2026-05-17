@@ -8,6 +8,7 @@ public sealed record Blazon(
     string HousePageUrl,
     string? Kind,
     string? VariantOf,
+    bool IncludeInEasy,
     bool IncludeInHard,
     IReadOnlyList<HouseHint> Hints,
     Attribution Attribution);

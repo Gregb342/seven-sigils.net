@@ -1,121 +1,156 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useCallback, useRef, useState } from 'react'
 import './App.css'
+import type { Blazon, GameSettings } from './domain/models/types'
+import { CreditsFooter } from './presentation/components/CreditsFooter'
+import { EncyclopediaScreen } from './presentation/components/EncyclopediaScreen'
+import { EndScreen } from './presentation/components/EndScreen'
+import { GameScreen } from './presentation/components/GameScreen'
+import { LoginScreen } from './presentation/components/LoginScreen'
+import { StartScreen } from './presentation/components/StartScreen'
+import { useAuth } from './presentation/hooks/useAuth'
+import { useQuizController } from './presentation/hooks/useQuizController'
+import { ApiClient } from './infrastructure/api/apiClient'
+import { ApiBlazonRepository } from './infrastructure/repositories/ApiBlazonRepository'
+
+const apiClient = new ApiClient()
+const repository = new ApiBlazonRepository(apiClient)
+
+type HomeView = 'menu' | 'login' | 'encyclopedia'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const auth = useAuth(apiClient)
+  const { snapshot, loading, error, start, answer, nextRound, stop, goToMenu, resetError } =
+    useQuizController(repository)
+
+  const [homeView, setHomeView] = useState<HomeView>('menu')
+  const [encyclopediaEntries, setEncyclopediaEntries] = useState<Blazon[]>([])
+  const [loadingEncyclopedia, setLoadingEncyclopedia] = useState(false)
+  const [encyclopediaError, setEncyclopediaError] = useState<string | null>(null)
+  const lastSettingsRef = useRef<GameSettings>({
+    mode: 'fixed',
+    difficulty: 'easy',
+    fixedRounds: 10,
+  })
+
+  const loadEncyclopedia = useCallback(async () => {
+    if (encyclopediaEntries.length > 0 || loadingEncyclopedia) return
+    setEncyclopediaError(null)
+    setLoadingEncyclopedia(true)
+    try {
+      const result = await repository.fetchPage(1, 100)
+      setEncyclopediaEntries(result.items)
+    } catch (e) {
+      setEncyclopediaError(e instanceof Error ? e.message : 'Erreur inconnue')
+    } finally {
+      setLoadingEncyclopedia(false)
+    }
+  }, [encyclopediaEntries.length, loadingEncyclopedia])
+
+  const openEncyclopedia = () => {
+    if (!auth.isAuthenticated) {
+      setHomeView('login')
+      return
+    }
+    setHomeView('encyclopedia')
+    void loadEncyclopedia()
+  }
+
+  const handleLoginSubmit = async (email: string, password: string) => {
+    const success = await auth.login(email, password)
+    if (success) {
+      setHomeView('encyclopedia')
+      void loadEncyclopedia()
+    }
+  }
+
+  const backToMenu = () => {
+    setHomeView('menu')
+    goToMenu()
+  }
+
+  const onStart = async (
+    mode: GameSettings['mode'],
+    difficulty: GameSettings['difficulty'],
+    fixedRounds: number,
+  ) => {
+    const maxFixedRounds = difficulty === 'easy' ? 30 : 40
+    const safeFixedRounds = Number.isFinite(fixedRounds)
+      ? Math.max(5, Math.min(maxFixedRounds, Math.round(fixedRounds)))
+      : 10
+    const settings: GameSettings = { mode, difficulty, fixedRounds: safeFixedRounds }
+    lastSettingsRef.current = settings
+    await start(settings.mode, settings.difficulty, settings.fixedRounds)
+  }
+
+  const onReplay = async () => {
+    const { mode, difficulty, fixedRounds } = lastSettingsRef.current
+    await start(mode, difficulty, fixedRounds)
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="app-shell">
+      <main className="main-content">
+        {snapshot.status === 'idle' && (
+          <>
+            {homeView === 'menu' && (
+              <StartScreen
+                bestScore={snapshot.bestScore}
+                loading={loading}
+                isAuthenticated={auth.isAuthenticated}
+                onStart={onStart}
+                onOpenEncyclopedia={openEncyclopedia}
+                onLogin={() => setHomeView('login')}
+                onLogout={auth.logout}
+              />
+            )}
 
-      <div className="ticks"></div>
+            {homeView === 'login' && (
+              <LoginScreen
+                onLogin={handleLoginSubmit}
+                onBack={() => setHomeView('menu')}
+                loading={auth.loading}
+                error={auth.error}
+              />
+            )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+            {homeView === 'encyclopedia' && (
+              <EncyclopediaScreen
+                entries={encyclopediaEntries}
+                loading={loadingEncyclopedia}
+                error={encyclopediaError}
+                onBack={() => setHomeView('menu')}
+              />
+            )}
+          </>
+        )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        {snapshot.status === 'running' && (
+          <GameScreen
+            key={snapshot.question?.blazon.id ?? 'no-question'}
+            snapshot={snapshot}
+            onAnswer={answer}
+            onNext={nextRound}
+            onStop={stop}
+            onMainMenu={backToMenu}
+          />
+        )}
+
+        {snapshot.status === 'finished' && (
+          <EndScreen snapshot={snapshot} onReplay={onReplay} onMainMenu={backToMenu} />
+        )}
+
+        {error && (
+          <div className="error-banner" role="alert">
+            <p>{error}</p>
+            <button type="button" className="ghost-btn" onClick={resetError}>
+              Fermer
+            </button>
+          </div>
+        )}
+      </main>
+
+      <CreditsFooter />
+    </div>
   )
 }
 
