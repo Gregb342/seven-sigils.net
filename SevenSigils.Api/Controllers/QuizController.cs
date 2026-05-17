@@ -24,12 +24,19 @@ public sealed class QuizController : ControllerBase
             ? Difficulty.Hard
             : Difficulty.Easy;
 
-        var question = await _quizQuestionService.CreateQuestionAsync(
-            difficulty,
-            request.ExcludedIds?.ToArray() ?? Array.Empty<string>(),
-            cancellationToken);
+        try
+        {
+            var question = await _quizQuestionService.CreateQuestionAsync(
+                difficulty,
+                request.ExcludedIds?.ToArray() ?? Array.Empty<string>(),
+                cancellationToken);
 
-        return Ok(question);
+            return Ok(question);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     public sealed class QuestionRequest
