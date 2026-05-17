@@ -1,4 +1,8 @@
 .counter {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 16px;
   padding: 5px 10px;
   border-radius: 5px;
@@ -15,6 +19,44 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
+}
+
+.counter.secondary {
+  background: transparent;
+  border-color: var(--border);
+}
+
+.cta-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 12px;
+  opacity: 0.7;
+  margin: 0 0 8px;
+}
+
+.status {
+  max-width: 600px;
+  color: var(--text);
+  opacity: 0.8;
+}
+
+.roadmap-item {
+  color: var(--text-h);
+  font-size: 16px;
+  border-radius: 6px;
+  background: var(--social-bg);
+  display: flex;
+  padding: 10px 12px;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
 }
 
 .hero {

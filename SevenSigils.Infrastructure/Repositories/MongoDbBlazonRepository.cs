@@ -51,5 +51,5 @@ public sealed class MongoDbBlazonRepository : IBlazonRepository
             SourcePageUrl: doc.Attribution.SourcePageUrl,
             LicenseLabel: doc.Attribution.LicenseLabel,
             LicenseUrl: doc.Attribution.LicenseUrl,
-            Notes: doc.Attribution.Notes));
+            Notes: doc.Attribution.Notes ?? string.Empty));
 }

@@ -1,11 +1,11 @@
-import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
+import { getResource } from './resources'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const copy = getResource('fr')
 
   return (
     <>
@@ -16,18 +16,19 @@ function App() {
           <img src={viteLogo} className="vite" alt="Vite logo" />
         </div>
         <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
+          <p className="eyebrow">Front de démonstration</p>
+          <h1>{copy.hero.title}</h1>
+          <p>{copy.hero.subtitle}</p>
+          <p className="status">{copy.hero.status}</p>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+        <div className="cta-group">
+          <a className="counter" href="http://localhost:5000/swagger" target="_blank" rel="noreferrer">
+            {copy.hero.primaryCta}
+          </a>
+          <a className="counter secondary" href="/blazons" target="_blank" rel="noreferrer">
+            {copy.hero.secondaryCta}
+          </a>
+        </div>
       </section>
 
       <div className="ticks"></div>
@@ -37,78 +38,31 @@ function App() {
           <svg className="icon" role="presentation" aria-hidden="true">
             <use href="/icons.svg#documentation-icon"></use>
           </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
+          <h2>{copy.sections.api.title}</h2>
+          <p>{copy.sections.api.description}</p>
           <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
+            {copy.sections.api.links.map((link) => (
+              <li key={link.href}>
+                <a href={link.href} target="_blank" rel="noreferrer">
+                  <img className="button-icon" src={link.href.includes('swagger') ? viteLogo : reactLogo} alt="" />
+                  {link.label}
+                </a>
+              </li>
+            ))}
           </ul>
         </div>
         <div id="social">
           <svg className="icon" role="presentation" aria-hidden="true">
             <use href="/icons.svg#social-icon"></use>
           </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
+          <h2>{copy.sections.roadmap.title}</h2>
+          <p>{copy.sections.roadmap.description}</p>
           <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
+            {copy.sections.roadmap.items.map((item) => (
+              <li key={item}>
+                <span className="roadmap-item">{item}</span>
+              </li>
+            ))}
           </ul>
         </div>
       </section>
