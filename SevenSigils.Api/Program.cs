@@ -5,7 +5,9 @@ using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 using Serilog;
 using SevenSigils.Api.Validation;
+using SevenSigils.Application.Admin;
 using SevenSigils.Application.Auth;
+using SevenSigils.Application.Catalog;
 using SevenSigils.Application.Services;
 using SevenSigils.Domain.Abstractions;
 using SevenSigils.Infrastructure.Options;
@@ -42,6 +44,8 @@ builder.Services.AddSingleton<IAccessTokenGenerator, JwtAccessTokenGenerator>();
 builder.Services.AddSingleton<IRandomProvider, CryptoRandomProvider>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IQuizQuestionService, QuizQuestionService>();
+builder.Services.AddScoped<ICatalogService, CatalogService>();
+builder.Services.AddScoped<IAdminBlazonService, AdminBlazonService>();
 
 builder.Services.AddControllers();
 builder.Services.AddFluentValidationAutoValidation();

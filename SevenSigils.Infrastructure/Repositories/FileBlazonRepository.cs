@@ -31,6 +31,22 @@ public sealed class FileBlazonRepository : IBlazonRepository
         return Task.FromResult<IReadOnlyList<Blazon>>(hard);
     }
 
+    public Task<(IReadOnlyList<Blazon> Items, long TotalCount)> GetAllAsync(
+        int page, int pageSize, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException("FileBlazonRepository is read-only. Use MongoDbBlazonRepository.");
+
+    public Task<Blazon?> GetBySlugAsync(string familySlug, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException("FileBlazonRepository is read-only. Use MongoDbBlazonRepository.");
+
+    public Task<Blazon> CreateAsync(Blazon blazon, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException("FileBlazonRepository is read-only. Use MongoDbBlazonRepository.");
+
+    public Task<Blazon?> UpdateAsync(Blazon blazon, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException("FileBlazonRepository is read-only. Use MongoDbBlazonRepository.");
+
+    public Task<bool> DeleteAsync(string familySlug, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException("FileBlazonRepository is read-only. Use MongoDbBlazonRepository.");
+
     private static IReadOnlyList<Blazon> LoadFromJson(string path)
     {
         if (!File.Exists(path))
@@ -69,6 +85,7 @@ public sealed class FileBlazonRepository : IBlazonRepository
             HousePageUrl: houseUrl,
             Kind: entry.Kind,
             VariantOf: entry.VariantOf,
+            IncludeInEasy: false,
             IncludeInHard: entry.IncludeInHard ?? !IsAltVariant(slug),
             Hints: (entry.Hints ?? new List<BlazonHint>()).Select(h => new HouseHint(h.Title ?? "Hint", h.Value ?? string.Empty)).ToList(),
             Attribution: new Attribution(
