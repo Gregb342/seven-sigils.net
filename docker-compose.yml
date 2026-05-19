@@ -2,8 +2,11 @@ services:
 
   # ── MongoDB ──────────────────────────────────────────────────────────────────
   mongodb:
-    image: mongo:7
+    image: mongo:7.0
     restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-}
     volumes:
       - mongo_data:/data/db
     healthcheck:
@@ -23,7 +26,8 @@ services:
       mongodb:
         condition: service_healthy
     environment:
-      - MongoDb__ConnectionString=mongodb://mongodb:27017
+      - ASPNETCORE_ENVIRONMENT=Production
+      - MongoDb__ConnectionString=${MONGO_CONNECTION_STRING:-mongodb://mongodb:27017}
       - MongoDb__DatabaseName=sevensigils
       - MongoDb__BlazonCollection=blazons
       - MongoDb__UserCollection=users
@@ -32,7 +36,7 @@ services:
       - Jwt__Issuer=SevenSigils
       - Jwt__Audience=SevenSigils
       - Jwt__ExpiryMinutes=60
-      - Cors__FrontendOrigin=http://localhost
+      - Cors__FrontendOrigin=${FRONTEND_ORIGIN:-http://localhost}
     ports:
       - "5189:8080"
     healthcheck:

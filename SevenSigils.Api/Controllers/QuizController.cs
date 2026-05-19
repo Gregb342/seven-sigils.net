@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SevenSigils.Application.Services;
 using SevenSigils.Domain.Models;
 
@@ -7,6 +8,7 @@ namespace SevenSigils.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/quiz")]
+[EnableRateLimiting("quiz")]
 public sealed class QuizController : ControllerBase
 {
     private readonly IQuizQuestionService _quizQuestionService;

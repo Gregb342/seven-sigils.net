@@ -30,11 +30,11 @@ backend **ASP.NET Core 10** + frontend **React 19 / Vite / TypeScript**.
 ```
 SevenSigils.Frontend      React 19 + Vite + TypeScript   http://localhost:5173
        │  HTTP REST
-SevenSigils.Api           ASP.NET Core 10                http://localhost:5000
+SevenSigils.Api           ASP.NET Core 10                http://localhost:5189
        │  DI / interfaces
 SevenSigils.Application   Services métier
        │
-SevenSigils.Infrastructure  MongoDB · FileBlazonRepository (dev)
+SevenSigils.Infrastructure  MongoDB (MongoDbBlazonRepository, BlazonSeeder, CryptoRandomProvider)
        │
 SevenSigils.Domain        Entités pures + interfaces (aucune dépendance externe)
 ```
@@ -52,16 +52,32 @@ SevenSigils.Domain        Entités pures + interfaces (aucune dépendance extern
 
 | Couche | Technologies |
 |---|---|
-| Backend | .NET 10 · ASP.NET Core · JWT Bearer · Serilog · FluentValidation · Swagger |
-| Base de données | MongoDB (via `MongoDB.Driver 3.x`) |
+| Backend | .NET 10 · ASP.NET Core · JWT Bearer · Serilog · FluentValidation · Swagger (dev) · Rate Limiting |
+| Base de données | MongoDB 7.0 (via `MongoDB.Driver 3.x`) |
 | Frontend | React 19 · Vite 8 · TypeScript |
+| Conteneurisation | Docker Compose (mongodb + api + frontend/nginx) |
 | Tests | xUnit · FluentAssertions · Testcontainers |
 
 ---
 
 ### Commandes
 
-#### Backend
+#### Docker Compose (recommandé)
+
+```bash
+# Démarrer tous les services (mongodb + api + frontend) avec override dev auto-appliqué
+docker compose up --build
+
+# En arrière-plan
+docker compose up -d --build
+
+# Arrêter
+docker compose down
+```
+
+L'API est accessible sur `http://localhost:8080`, le frontend sur `http://localhost`.
+
+#### Backend (sans Docker)
 
 ```bash
 # Restaurer les packages
@@ -70,14 +86,14 @@ dotnet restore SevenSigils.slnx
 # Compiler
 dotnet build SevenSigils.slnx
 
-# Lancer l'API (http://localhost:5000 · Swagger : /swagger)
+# Lancer l'API (http://localhost:5189 · Swagger : /swagger)
 dotnet run --project SevenSigils.Api
 
 # Tests
 dotnet test SevenSigils.slnx
 ```
 
-#### Frontend
+#### Frontend (sans Docker)
 
 ```bash
 cd SevenSigils.Frontend
@@ -92,11 +108,13 @@ npm run lint
 ### Prérequis
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [Node.js 20+](https://nodejs.org/)
-- [MongoDB](https://www.mongodb.com/) — instance locale sur `mongodb://localhost:27017`  
-  ou via Docker : `docker run -d -p 27017:27017 mongo`
+- [Node.js 22+](https://nodejs.org/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (recommandé pour démarrer l'ensemble)
 
-Au premier démarrage, l'API **seed automatiquement** la collection `blazons` depuis `SevenSigils.Api/data/blazonDb.json`.
+Pour une exécution sans Docker, une instance MongoDB sur `mongodb://localhost:27017` est nécessaire.  
+Avec Compass, utilisez l'URI : `mongodb://localhost:27017/`
+
+Au premier démarrage, l'API **seed automatiquement** la collection `blazons` depuis `SevenSigils.Api/data/blazonDb.json` si elle est vide.
 
 ---
 
@@ -118,11 +136,14 @@ et suivent le pattern : `Blason-<slug>-2014-v01-256px.png`
 |---|---|---|
 | `POST /api/v1/quiz/question` | Anonyme | ✅ |
 | `GET /health` | Anonyme | ✅ |
-| `GET /swagger` | Anonyme | ✅ (dev) |
-| `POST /api/v1/auth/register` | Anonyme | 🔜 |
-| `POST /api/v1/auth/login` | Anonyme | 🔜 |
-| `GET /api/v1/catalog` | User | 🔜 |
-| `* /api/v1/admin/**` | Admin | 🔜 |
+| `GET /swagger` | Anonyme | ✅ (dev uniquement) |
+| `POST /api/v1/auth/register` | Anonyme | ✅ |
+| `POST /api/v1/auth/login` | Anonyme | ✅ |
+| `GET /api/v1/catalog` | User | ✅ |
+| `GET /api/v1/catalog/{slug}` | User | ✅ |
+| `POST /api/v1/admin/blazons` | Admin | ✅ |
+| `PUT /api/v1/admin/blazons/{slug}` | Admin | ✅ |
+| `DELETE /api/v1/admin/blazons/{slug}` | Admin | ✅ |
 
 ---
 
@@ -156,21 +177,29 @@ Fullstack rewrite of the original [`heraldik_of_the_watch`](https://github.com/G
 
 ### Quick start
 
-#### Backend
+#### Docker Compose (recommended)
+
+```bash
+docker compose up --build
+```
+
+API: `http://localhost:8080` · Frontend: `http://localhost`  
+MongoDB Compass: `mongodb://localhost:27017/`
+
+#### Backend (without Docker)
 
 ```bash
 dotnet restore SevenSigils.slnx
 dotnet run --project SevenSigils.Api
 ```
 
-#### Frontend
+#### Frontend (without Docker)
 
 ```bash
 cd SevenSigils.Frontend && npm install && npm run dev
 ```
 
-Requires a running MongoDB instance on `mongodb://localhost:27017`.  
-Docker: `docker run -d -p 27017:27017 mongo`
+Requires a running MongoDB instance on `mongodb://localhost:27017`.
 
 ---
 
