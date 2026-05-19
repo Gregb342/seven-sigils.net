@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SevenSigils.Api.Contracts.Auth;
 using SevenSigils.Application.Auth;
 
@@ -7,6 +8,7 @@ namespace SevenSigils.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/auth")]
+[EnableRateLimiting("auth")]
 public sealed class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
