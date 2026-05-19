@@ -13,6 +13,7 @@ node_modules/
 # Secrets
 appsettings.*.json
 !appsettings.json
+.env
 
 # Test results
 TestResults/
