@@ -5,21 +5,15 @@ import { APP_VERSION } from '../../version'
 interface StartScreenProps {
   bestScore: number
   loading: boolean
-  isAuthenticated: boolean
   onStart: (mode: GameMode, difficulty: Difficulty, fixedRounds: number) => Promise<void>
   onOpenEncyclopedia: () => void
-  onLogin: () => void
-  onLogout: () => void
 }
 
 export function StartScreen({
   bestScore,
   loading,
-  isAuthenticated,
   onStart,
   onOpenEncyclopedia,
-  onLogin,
-  onLogout,
 }: StartScreenProps) {
   const [mode, setMode] = useState<GameMode>('fixed')
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
@@ -91,18 +85,8 @@ export function StartScreen({
 
       <div className="start-secondary-actions">
         <button type="button" className="ghost-btn" onClick={onOpenEncyclopedia}>
-          {isAuthenticated ? 'Encyclopédie des blasons' : 'Encyclopédie (connexion requise)'}
+          Encyclopédie des blasons
         </button>
-
-        {isAuthenticated ? (
-          <button type="button" className="ghost-btn" onClick={onLogout}>
-            Se déconnecter
-          </button>
-        ) : (
-          <button type="button" className="ghost-btn" onClick={onLogin}>
-            Se connecter
-          </button>
-        )}
       </div>
 
       <p className="best-score">Meilleur score local : {bestScore}</p>
