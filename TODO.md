@@ -1,5 +1,16 @@
 # TODO — points connus, reportés volontairement
 
+## Encyclopédie : bug d'affichage de l'index alphabétique
+
+La barre de droite de l'encyclopédie (navigation par lettre de maison) a un
+souci d'affichage. À investiguer côté `EncyclopediaScreen.tsx` / CSS.
+
+## Lint : 2 erreurs react-hooks préexistantes (set-state-in-effect)
+
+`npm run lint` échoue sur `EncyclopediaScreen.tsx:43` et `StartScreen.tsx:29` :
+setState synchrone dans un useEffect (règle react-hooks 7). Corriger en
+clampant/dérivant la valeur au rendu ou dans le handler plutôt qu'en effet.
+
 ## Quiz : doublons possibles dans les options
 
 `QuizQuestionService.CreateQuestionAsync` filtre les distracteurs uniquement contre

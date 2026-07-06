@@ -9,9 +9,11 @@ import { StartScreen } from './presentation/components/StartScreen'
 import { useQuizController } from './presentation/hooks/useQuizController'
 import { ApiClient } from './infrastructure/api/apiClient'
 import { ApiBlazonRepository } from './infrastructure/repositories/ApiBlazonRepository'
+import { LocalStorageHighscoreStore } from './infrastructure/services/LocalStorageHighscoreStore'
 
 const apiClient = new ApiClient()
 const repository = new ApiBlazonRepository(apiClient)
+const highscoreStore = new LocalStorageHighscoreStore()
 
 type HomeView = 'menu' | 'encyclopedia'
 
@@ -82,6 +84,7 @@ function App() {
               <StartScreen
                 bestScore={snapshot.bestScore}
                 loading={loading}
+                highscoreStore={highscoreStore}
                 onStart={onStart}
                 onOpenEncyclopedia={openEncyclopedia}
               />
@@ -110,7 +113,12 @@ function App() {
         )}
 
         {snapshot.status === 'finished' && (
-          <EndScreen snapshot={snapshot} onReplay={onReplay} onMainMenu={backToMenu} />
+          <EndScreen
+            snapshot={snapshot}
+            highscoreStore={highscoreStore}
+            onReplay={onReplay}
+            onMainMenu={backToMenu}
+          />
         )}
 
         {error && (
