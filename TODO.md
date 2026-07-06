@@ -31,10 +31,10 @@ lent à répondre, l'API ne démarre pas du tout, et le healthcheck Docker
 **Fix envisagé** : déplacer le seeding dans un `IHostedService` (tâche de fond
 après démarrage) avec retries — l'API répond pendant que le seed s'exécute.
 
-## ApplicationUser / rôle Admin
+## ApplicationUser / rôle Admin — décision actée
 
-Le modèle `ApplicationUser` (email + rôles) vient d'un choix Copilot historique,
-principalement pour créer un utilisateur admin. À réévaluer : est-ce que le
-register/login public est encore pertinent, ou seul un compte admin suffit ?
-Si l'app reste sans données personnelles, pas de refresh token nécessaire
-(JWT 60 min, choix assumé).
+Plus de comptes joueurs : le register public a été supprimé, seuls des comptes
+Admin existent (seedés côté serveur — à implémenter avec le back-office).
+L'app ne collecte aucune donnée personnelle de joueur (pseudo/scores en
+localStorage uniquement). Pas de refresh token nécessaire (JWT 60 min, choix
+assumé pour un usage admin).

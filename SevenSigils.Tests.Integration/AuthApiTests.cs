@@ -21,8 +21,9 @@ public sealed class AuthApiTests : IClassFixture<AuthApiFactory>
         _factory = factory;
     }
 
+    // L'inscription publique n'existe plus : l'endpoint doit avoir disparu.
     [Fact]
-    public async Task Register_ShouldReturnToken_WhenPayloadIsValid()
+    public async Task Register_ShouldReturn404_EndpointRemoved()
     {
         var client = _factory.CreateClient();
 
@@ -32,58 +33,15 @@ public sealed class AuthApiTests : IClassFixture<AuthApiFactory>
             password = "Password123!"
         });
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<AuthResponseBody>();
-        body.Should().NotBeNull();
-        body!.Email.Should().Be("user@test.dev");
-        body.AccessToken.Should().NotBeNullOrWhiteSpace();
-        body.Roles.Should().ContainSingle("User");
-    }
-
-    [Fact]
-    public async Task Register_ShouldReturnConflict_WhenEmailAlreadyExists()
-    {
-        var client = _factory.CreateClient();
-
-        await client.PostAsJsonAsync("/api/v1/auth/register", new
-        {
-            email = "duplicate@test.dev",
-            password = "Password123!"
-        });
-
-        var response = await client.PostAsJsonAsync("/api/v1/auth/register", new
-        {
-            email = "duplicate@test.dev",
-            password = "Password123!"
-        });
-
-        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-    }
-
-    [Fact]
-    public async Task Register_ShouldReturnBadRequest_WhenPasswordIsWeak()
-    {
-        var client = _factory.CreateClient();
-
-        var response = await client.PostAsJsonAsync("/api/v1/auth/register", new
-        {
-            email = "weak@test.dev",
-            password = "weak"
-        });
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task Login_ShouldReturnToken_WhenCredentialsAreValid()
     {
+        // Plus de register : l'utilisateur est seedé directement (comme le fera le seeder admin).
+        _factory.SeedUser(new ApplicationUser("1", "login@test.dev", "hashed:Password123!", ["Admin"]));
         var client = _factory.CreateClient();
-
-        await client.PostAsJsonAsync("/api/v1/auth/register", new
-        {
-            email = "login@test.dev",
-            password = "Password123!"
-        });
 
         var response = await client.PostAsJsonAsync("/api/v1/auth/login", new
         {
@@ -92,6 +50,11 @@ public sealed class AuthApiTests : IClassFixture<AuthApiFactory>
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<AuthResponseBody>();
+        body.Should().NotBeNull();
+        body!.Email.Should().Be("login@test.dev");
+        body.AccessToken.Should().NotBeNullOrWhiteSpace();
+        body.Roles.Should().ContainSingle().Which.Should().Be("Admin");
     }
 
     [Fact]
@@ -113,6 +76,10 @@ public sealed class AuthApiTests : IClassFixture<AuthApiFactory>
 
 public sealed class AuthApiFactory : WebApplicationFactory<Program>
 {
+    private readonly InMemoryUserRepository _users = new();
+
+    public void SeedUser(ApplicationUser user) => _users.Seed(user);
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -134,7 +101,7 @@ public sealed class AuthApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<IAccessTokenGenerator>();
             services.RemoveAll<IAuthService>();
 
-            services.AddSingleton<IUserRepository, InMemoryUserRepository>();
+            services.AddSingleton<IUserRepository>(_users);
             services.AddSingleton<IPasswordHasher, FakePasswordHasher>();
             services.AddSingleton<IAccessTokenGenerator, FakeAccessTokenGenerator>();
             services.AddScoped<IAuthService, AuthService>();
@@ -145,6 +112,8 @@ public sealed class AuthApiFactory : WebApplicationFactory<Program>
 internal sealed class InMemoryUserRepository : IUserRepository
 {
     private readonly Dictionary<string, ApplicationUser> _users = new(StringComparer.OrdinalIgnoreCase);
+
+    public void Seed(ApplicationUser user) => _users[user.Email] = user;
 
     public Task<ApplicationUser?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
