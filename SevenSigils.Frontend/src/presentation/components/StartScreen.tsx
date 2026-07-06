@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { Difficulty, GameMode } from '../../domain/models/types'
+import type { HighscoreStore } from '../../domain/ports'
 import { APP_VERSION } from '../../version'
+import { HighscoreTable } from './HighscoreTable'
 
 interface StartScreenProps {
   bestScore: number
   loading: boolean
+  highscoreStore: HighscoreStore
   onStart: (mode: GameMode, difficulty: Difficulty, fixedRounds: number) => Promise<void>
   onOpenEncyclopedia: () => void
 }
@@ -12,12 +15,14 @@ interface StartScreenProps {
 export function StartScreen({
   bestScore,
   loading,
+  highscoreStore,
   onStart,
   onOpenEncyclopedia,
 }: StartScreenProps) {
   const [mode, setMode] = useState<GameMode>('fixed')
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
   const [fixedRounds, setFixedRounds] = useState(10)
+  const [showHighscores, setShowHighscores] = useState(false)
   const maxFixedRounds = difficulty === 'easy' ? 30 : 40
 
   useEffect(() => {
@@ -87,7 +92,22 @@ export function StartScreen({
         <button type="button" className="ghost-btn" onClick={onOpenEncyclopedia}>
           Encyclopédie des blasons
         </button>
+
+        <button
+          type="button"
+          className="ghost-btn"
+          onClick={() => setShowHighscores((current) => !current)}
+        >
+          {showHighscores ? 'Masquer les meilleurs scores' : 'Meilleurs scores'}
+        </button>
       </div>
+
+      {showHighscores && (
+        <div className="highscore-board">
+          <h3>Meilleurs scores — {difficulty === 'easy' ? 'Facile' : 'Difficile'}</h3>
+          <HighscoreTable entries={highscoreStore.getTop(difficulty)} />
+        </div>
+      )}
 
       <p className="best-score">Meilleur score local : {bestScore}</p>
     </section>

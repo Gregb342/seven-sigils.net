@@ -493,3 +493,89 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Highscores (arcade local) ─────────────────────────────────────────────── */
+
+.highscore-board {
+  margin-top: 0.9rem;
+  text-align: left;
+}
+
+.highscore-board h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.highscore-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.highscore-row {
+  display: grid;
+  grid-template-columns: 2rem 1fr auto;
+  gap: 0.6rem;
+  align-items: baseline;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.highscore-row--new {
+  border-color: var(--accent-1);
+  background: color-mix(in srgb, var(--accent-1) 12%, transparent);
+}
+
+.highscore-rank {
+  color: var(--ink-dim);
+  font-weight: 700;
+}
+
+.highscore-pseudo {
+  overflow-wrap: anywhere;
+}
+
+.highscore-score {
+  font-weight: 700;
+}
+
+.highscore-empty {
+  color: var(--ink-dim);
+  font-style: italic;
+  margin: 0.5rem 0 0;
+}
+
+.highscore-entry-form {
+  margin: 0.9rem 0;
+  text-align: left;
+}
+
+.highscore-entry-form label {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+}
+
+.highscore-entry-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.highscore-entry-row input {
+  flex: 1;
+  min-width: 10rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  text-transform: none;
+}
