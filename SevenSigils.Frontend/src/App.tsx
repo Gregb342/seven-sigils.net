@@ -5,9 +5,7 @@ import { CreditsFooter } from './presentation/components/CreditsFooter'
 import { EncyclopediaScreen } from './presentation/components/EncyclopediaScreen'
 import { EndScreen } from './presentation/components/EndScreen'
 import { GameScreen } from './presentation/components/GameScreen'
-import { LoginScreen } from './presentation/components/LoginScreen'
 import { StartScreen } from './presentation/components/StartScreen'
-import { useAuth } from './presentation/hooks/useAuth'
 import { useQuizController } from './presentation/hooks/useQuizController'
 import { ApiClient } from './infrastructure/api/apiClient'
 import { ApiBlazonRepository } from './infrastructure/repositories/ApiBlazonRepository'
@@ -15,10 +13,9 @@ import { ApiBlazonRepository } from './infrastructure/repositories/ApiBlazonRepo
 const apiClient = new ApiClient()
 const repository = new ApiBlazonRepository(apiClient)
 
-type HomeView = 'menu' | 'login' | 'encyclopedia'
+type HomeView = 'menu' | 'encyclopedia'
 
 function App() {
-  const auth = useAuth(apiClient)
   const { snapshot, loading, error, start, answer, nextRound, stop, goToMenu, resetError } =
     useQuizController(repository)
 
@@ -46,21 +43,10 @@ function App() {
     }
   }, [encyclopediaEntries.length, loadingEncyclopedia])
 
+  // L'encyclopédie est publique : accès direct, sans authentification.
   const openEncyclopedia = () => {
-    if (!auth.isAuthenticated) {
-      setHomeView('login')
-      return
-    }
     setHomeView('encyclopedia')
     void loadEncyclopedia()
-  }
-
-  const handleLoginSubmit = async (email: string, password: string) => {
-    const success = await auth.login(email, password)
-    if (success) {
-      setHomeView('encyclopedia')
-      void loadEncyclopedia()
-    }
   }
 
   const backToMenu = () => {
@@ -96,20 +82,8 @@ function App() {
               <StartScreen
                 bestScore={snapshot.bestScore}
                 loading={loading}
-                isAuthenticated={auth.isAuthenticated}
                 onStart={onStart}
                 onOpenEncyclopedia={openEncyclopedia}
-                onLogin={() => setHomeView('login')}
-                onLogout={auth.logout}
-              />
-            )}
-
-            {homeView === 'login' && (
-              <LoginScreen
-                onLogin={handleLoginSubmit}
-                onBack={() => setHomeView('menu')}
-                loading={auth.loading}
-                error={auth.error}
               />
             )}
 

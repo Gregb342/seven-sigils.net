@@ -27,22 +27,13 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFactory>
         _factory = factory;
     }
 
+    // Le catalogue est public : l'encyclopédie doit être consultable sans compte.
     [Fact]
-    public async Task GetAll_ShouldReturn401_WhenNotAuthenticated()
-    {
-        var client = _factory.CreateClient();
-
-        var response = await client.GetAsync("/api/v1/catalog");
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
-    public async Task GetAll_ShouldReturnPagedResult_WhenAuthenticated()
+    public async Task GetAll_ShouldReturnPagedResult_WhenNotAuthenticated()
     {
         _factory.SeedBlazon(CatalogBlazon("stark", "Stark"));
         _factory.SeedBlazon(CatalogBlazon("lannister", "Lannister"));
-        var client = _factory.CreateUserClient();
+        var client = _factory.CreateClient();
 
         var response = await client.GetAsync("/api/v1/catalog?page=1&pageSize=10");
 
@@ -56,7 +47,7 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFactory>
     [Fact]
     public async Task GetAll_ShouldReturn400_WhenPaginationIsInvalid()
     {
-        var client = _factory.CreateUserClient();
+        var client = _factory.CreateClient();
 
         var response = await client.GetAsync("/api/v1/catalog?page=0&pageSize=0");
 
@@ -67,7 +58,7 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFactory>
     public async Task GetBySlug_ShouldReturnBlazon_WhenItExists()
     {
         _factory.SeedBlazon(CatalogBlazon("tyrell", "Tyrell"));
-        var client = _factory.CreateUserClient();
+        var client = _factory.CreateClient();
 
         var response = await client.GetAsync("/api/v1/catalog/tyrell");
 
@@ -79,7 +70,7 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFactory>
     [Fact]
     public async Task GetBySlug_ShouldReturn404_WhenBlazonDoesNotExist()
     {
-        var client = _factory.CreateUserClient();
+        var client = _factory.CreateClient();
 
         var response = await client.GetAsync("/api/v1/catalog/unknown-house");
 

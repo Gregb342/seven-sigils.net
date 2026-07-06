@@ -139,8 +139,8 @@ et suivent le pattern : `Blason-<slug>-2014-v01-256px.png`
 | `GET /swagger` | Anonyme | ✅ (dev uniquement) |
 | `POST /api/v1/auth/register` | Anonyme | ✅ |
 | `POST /api/v1/auth/login` | Anonyme | ✅ |
-| `GET /api/v1/catalog` | User | ✅ |
-| `GET /api/v1/catalog/{slug}` | User | ✅ |
+| `GET /api/v1/catalog` | Anonyme | ✅ |
+| `GET /api/v1/catalog/{slug}` | Anonyme | ✅ |
 | `POST /api/v1/admin/blazons` | Admin | ✅ |
 | `PUT /api/v1/admin/blazons/{slug}` | Admin | ✅ |
 | `DELETE /api/v1/admin/blazons/{slug}` | Admin | ✅ |
