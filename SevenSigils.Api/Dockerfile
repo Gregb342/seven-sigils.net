@@ -23,6 +23,13 @@ RUN dotnet publish SevenSigils.Api/SevenSigils.Api.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
+# curl est requis par le HEALTHCHECK de docker-compose.yml : l'image aspnet
+# ne l'embarque pas. --no-install-recommends + purge des listes apt pour
+# limiter la taille et la surface d'attaque.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/publish .
 
 ENV ASPNETCORE_URLS=http://+:8080
