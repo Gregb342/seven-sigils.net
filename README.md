@@ -137,8 +137,7 @@ et suivent le pattern : `Blason-<slug>-2014-v01-256px.png`
 | `POST /api/v1/quiz/question` | Anonyme | ✅ |
 | `GET /health` | Anonyme | ✅ |
 | `GET /swagger` | Anonyme | ✅ (dev uniquement) |
-| `POST /api/v1/auth/register` | Anonyme | ✅ |
-| `POST /api/v1/auth/login` | Anonyme | ✅ |
+| `POST /api/v1/auth/login` | Anonyme (réservé admin) | ✅ |
 | `GET /api/v1/catalog` | Anonyme | ✅ |
 | `GET /api/v1/catalog/{slug}` | Anonyme | ✅ |
 | `POST /api/v1/admin/blazons` | Admin | ✅ |

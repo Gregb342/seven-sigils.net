@@ -18,32 +18,7 @@ public sealed class AuthController : ControllerBase
         _authService = authService;
     }
 
-    [HttpPost("register")]
-    [AllowAnonymous]
-    [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var result = await _authService.RegisterAsync(
-                new RegisterUserCommand(request.Email, request.Password),
-                cancellationToken);
-
-            return Ok(ToResponse(result));
-        }
-        catch (DuplicateEmailException ex)
-        {
-            return Conflict(new ProblemDetails
-            {
-                Title = "Registration failed",
-                Detail = ex.Message,
-                Status = StatusCodes.Status409Conflict
-            });
-        }
-    }
-
+    // Pas d'endpoint d'inscription : les comptes admin sont seedés côté serveur.
     [HttpPost("login")]
     [AllowAnonymous]
     [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]

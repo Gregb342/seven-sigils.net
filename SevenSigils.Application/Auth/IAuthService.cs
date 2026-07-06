@@ -1,7 +1,7 @@
 namespace SevenSigils.Application.Auth;
 
+// Pas d'inscription publique : les comptes (admin) sont seedés côté serveur.
 public interface IAuthService
 {
-    Task<AuthResult> RegisterAsync(RegisterUserCommand command, CancellationToken cancellationToken = default);
     Task<AuthResult> LoginAsync(LoginUserCommand command, CancellationToken cancellationToken = default);
 }
