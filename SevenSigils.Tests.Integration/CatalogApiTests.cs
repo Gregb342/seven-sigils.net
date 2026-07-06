@@ -242,7 +242,10 @@ public sealed class CatalogApiFactory : WebApplicationFactory<Program>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["MongoDb:SeedOnStartup"] = "false"
+                ["MongoDb:SeedOnStartup"] = "false",
+                // Requis par le garde-fou de Program.cs : hors Development,
+                // la clé placeholder est refusée au démarrage.
+                ["Jwt:Key"] = "TEST_ONLY_LONG_ENOUGH_SECRET_KEY_1234567890"
             });
         });
 
