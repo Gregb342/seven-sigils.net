@@ -23,12 +23,16 @@ const competitiveStore = new LocalStorageCompetitiveScoreStore()
 
 type HomeView = 'menu' | 'encyclopedia'
 
+// Back-office accessible via /#citadel ou /citadel (le fallback SPA de nginx sert
+// index.html pour les deux) — volontairement sans lien dans l'UI joueur.
+// Ce n'est pas une protection (l'API reste le vrai garde), juste de la discrétion.
+const isCitadelLocation = () =>
+  window.location.hash === '#citadel' || window.location.pathname === '/citadel'
+
 function App() {
-  // Back-office accessible via l'URL /#citadel — volontairement sans lien dans l'UI joueur.
-  // Ce n'est pas une protection (l'API reste le vrai garde), juste de la discrétion.
-  const [isCitadel, setIsCitadel] = useState(() => window.location.hash === '#citadel')
+  const [isCitadel, setIsCitadel] = useState(isCitadelLocation)
   useEffect(() => {
-    const onHashChange = () => setIsCitadel(window.location.hash === '#citadel')
+    const onHashChange = () => setIsCitadel(isCitadelLocation())
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
