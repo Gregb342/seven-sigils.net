@@ -37,6 +37,9 @@ services:
       - Jwt__Audience=SevenSigils
       - Jwt__ExpiryMinutes=60
       - Cors__FrontendOrigin=${FRONTEND_ORIGIN:-http://localhost}
+      # Compte admin seedé au démarrage. Vides par défaut = aucun compte créé.
+      - Admin__Email=${ADMIN_EMAIL:-}
+      - Admin__Password=${ADMIN_PASSWORD:-}
     ports:
       - "5189:8080"
     healthcheck:

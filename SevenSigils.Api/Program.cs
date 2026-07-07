@@ -32,6 +32,7 @@ builder.Host.UseSerilog();
 builder.Services.Configure<BlazonDataOptions>(builder.Configuration.GetSection(BlazonDataOptions.SectionName));
 builder.Services.Configure<MongoDbOptions>(builder.Configuration.GetSection(MongoDbOptions.SectionName));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<AdminSeedOptions>(builder.Configuration.GetSection(AdminSeedOptions.SectionName));
 
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
@@ -42,6 +43,7 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
 builder.Services.AddSingleton<IBlazonRepository, MongoDbBlazonRepository>();
 builder.Services.AddSingleton<IUserRepository, MongoDbUserRepository>();
 builder.Services.AddTransient<BlazonSeeder>();
+builder.Services.AddTransient<AdminUserSeeder>();
 builder.Services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddSingleton<IAccessTokenGenerator, JwtAccessTokenGenerator>();
 builder.Services.AddSingleton<IRandomProvider, CryptoRandomProvider>();
@@ -153,6 +155,10 @@ if (app.Configuration.GetValue<bool?>("MongoDb:SeedOnStartup") != false)
     var seeder = app.Services.GetRequiredService<BlazonSeeder>();
     await seeder.SeedAsync();
 }
+
+// Sans Admin:Email / Admin:Password configurés, aucun compte n'est créé (le seeder loggue et passe).
+var adminSeeder = app.Services.GetRequiredService<AdminUserSeeder>();
+await adminSeeder.SeedAsync();
 
 app.Run();
 

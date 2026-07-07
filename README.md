@@ -116,6 +116,21 @@ Avec Compass, utilisez l'URI : `mongodb://localhost:27017/`
 
 Au premier démarrage, l'API **seed automatiquement** la collection `blazons` depuis `SevenSigils.Api/data/blazonDb.json` si elle est vide.
 
+#### Compte administrateur
+
+Le compte admin (accès au back-office) est seedé au démarrage **uniquement si** les
+variables sont configurées — aucune valeur par défaut, aucun compte créé sinon :
+
+```bash
+# .env (non versionné) à la racine, utilisé par docker compose
+ADMIN_EMAIL=vous@exemple.fr
+ADMIN_PASSWORD=un-mot-de-passe-de-12-caracteres-minimum
+```
+
+Le seed est idempotent : un compte existant n'est jamais modifié au redémarrage.
+Une configuration partielle (email sans mot de passe, mot de passe trop court…)
+fait échouer le démarrage plutôt que de créer un compte bancal.
+
 ---
 
 ### Source de données des blasons
