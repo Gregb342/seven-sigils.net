@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SevenSigils.Application\SevenSigils.Application.csproj" />
     <ProjectReference Include="..\SevenSigils.Domain\SevenSigils.Domain.csproj" />
+    <ProjectReference Include="..\SevenSigils.Infrastructure\SevenSigils.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
