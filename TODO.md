@@ -1,5 +1,14 @@
 # TODO — points connus, reportés volontairement
 
+## Mode compétitif — suites prévues
+
+1. **Citations/titres éditables via la citadel** : collection Mongo `quotes`, CRUD admin,
+   GET public ; l'écran de fin consommera l'API avec fallback sur `resources/quotes.ts`.
+2. **Défi du jour** (validé sur le principe) : même série de questions pour tous,
+   seedée par la date — nécessite une génération déterministe côté backend
+   (IRandomProvider seedable + endpoint dédié). À concevoir après les citations.
+3. Sons arcade Web Audio (écartés de la v1, envisageables plus tard).
+
 ## Back-office : upload des images de blasons
 
 Les PNG vivent dans `SevenSigils.Frontend/public/blazons/` (buildés dans

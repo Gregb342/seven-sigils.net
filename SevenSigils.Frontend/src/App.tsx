@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
 import type { Blazon, GameSettings } from './domain/models/types'
+import { OFFICIAL_ROUNDS, OFFICIAL_TIMER_SECONDS } from './domain/competitiveScoring'
 import { CreditsFooter } from './presentation/components/CreditsFooter'
 import { EncyclopediaScreen } from './presentation/components/EncyclopediaScreen'
 import { EndScreen } from './presentation/components/EndScreen'
@@ -11,10 +12,12 @@ import { useQuizController } from './presentation/hooks/useQuizController'
 import { ApiClient } from './infrastructure/api/apiClient'
 import { ApiBlazonRepository } from './infrastructure/repositories/ApiBlazonRepository'
 import { LocalStorageHighscoreStore } from './infrastructure/services/LocalStorageHighscoreStore'
+import { LocalStorageCompetitiveScoreStore } from './infrastructure/services/LocalStorageCompetitiveScoreStore'
 
 const apiClient = new ApiClient()
 const repository = new ApiBlazonRepository(apiClient)
 const highscoreStore = new LocalStorageHighscoreStore()
+const competitiveStore = new LocalStorageCompetitiveScoreStore()
 
 type HomeView = 'menu' | 'encyclopedia'
 
@@ -28,17 +31,30 @@ function App() {
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
-  const { snapshot, loading, error, start, answer, nextRound, stop, goToMenu, resetError } =
-    useQuizController(repository)
+  const {
+    snapshot,
+    loading,
+    error,
+    start,
+    answer,
+    timeout,
+    useHint,
+    nextRound,
+    stop,
+    goToMenu,
+    resetError,
+  } = useQuizController(repository)
 
   const [homeView, setHomeView] = useState<HomeView>('menu')
   const [encyclopediaEntries, setEncyclopediaEntries] = useState<Blazon[]>([])
   const [loadingEncyclopedia, setLoadingEncyclopedia] = useState(false)
   const [encyclopediaError, setEncyclopediaError] = useState<string | null>(null)
   const lastSettingsRef = useRef<GameSettings>({
+    gameType: 'classic',
     mode: 'fixed',
     difficulty: 'easy',
-    fixedRounds: 10,
+    fixedRounds: OFFICIAL_ROUNDS,
+    timerSeconds: OFFICIAL_TIMER_SECONDS,
   })
 
   const loadEncyclopedia = useCallback(async () => {
@@ -66,23 +82,14 @@ function App() {
     goToMenu()
   }
 
-  const onStart = async (
-    mode: GameSettings['mode'],
-    difficulty: GameSettings['difficulty'],
-    fixedRounds: number,
-  ) => {
-    const maxFixedRounds = difficulty === 'easy' ? 30 : 40
-    const safeFixedRounds = Number.isFinite(fixedRounds)
-      ? Math.max(5, Math.min(maxFixedRounds, Math.round(fixedRounds)))
-      : 10
-    const settings: GameSettings = { mode, difficulty, fixedRounds: safeFixedRounds }
+  const onStart = async (settings: GameSettings) => {
+    // Les bornes fines (manches, timer) sont garanties par QuizGameService.
     lastSettingsRef.current = settings
-    await start(settings.mode, settings.difficulty, settings.fixedRounds)
+    await start(settings)
   }
 
   const onReplay = async () => {
-    const { mode, difficulty, fixedRounds } = lastSettingsRef.current
-    await start(mode, difficulty, fixedRounds)
+    await start(lastSettingsRef.current)
   }
 
   if (isCitadel) {
@@ -106,6 +113,7 @@ function App() {
                 bestScore={snapshot.bestScore}
                 loading={loading}
                 highscoreStore={highscoreStore}
+                competitiveStore={competitiveStore}
                 onStart={onStart}
                 onOpenEncyclopedia={openEncyclopedia}
               />
@@ -127,6 +135,8 @@ function App() {
             key={snapshot.question?.blazon.id ?? 'no-question'}
             snapshot={snapshot}
             onAnswer={answer}
+            onTimeout={timeout}
+            onHint={useHint}
             onNext={nextRound}
             onStop={stop}
             onMainMenu={backToMenu}
@@ -137,6 +147,7 @@ function App() {
           <EndScreen
             snapshot={snapshot}
             highscoreStore={highscoreStore}
+            competitiveStore={competitiveStore}
             onReplay={onReplay}
             onMainMenu={backToMenu}
           />
