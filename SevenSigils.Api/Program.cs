@@ -16,6 +16,7 @@ using SevenSigils.Infrastructure.Options;
 using SevenSigils.Infrastructure.Repositories;
 using SevenSigils.Infrastructure.Security;
 using SevenSigils.Infrastructure.Seeding;
+using System.Reflection;
 using System.Text;
 using System.Threading.RateLimiting;
 
@@ -147,7 +148,16 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Version produit (Directory.Build.props) ; le suffixe "+sha" éventuel de
+// l'InformationalVersion est tronqué pour ne garder que le SemVer x.y.z.
+var appVersion = typeof(Program).Assembly
+    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+    .InformationalVersion.Split('+')[0] ?? "unknown";
+
+Log.Information("Seven Sigils API {Version} starting ({Environment})", appVersion, app.Environment.EnvironmentName);
+
 app.MapHealthChecks("/health");
+app.MapGet("/version", () => Results.Ok(new { version = appVersion }));
 app.MapControllers();
 
 if (app.Configuration.GetValue<bool?>("MongoDb:SeedOnStartup") != false)
