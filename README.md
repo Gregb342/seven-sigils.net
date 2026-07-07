@@ -116,6 +116,21 @@ Avec Compass, utilisez l'URI : `mongodb://localhost:27017/`
 
 Au premier démarrage, l'API **seed automatiquement** la collection `blazons` depuis `SevenSigils.Api/data/blazonDb.json` si elle est vide.
 
+#### Compte administrateur
+
+Le compte admin (accès au back-office) est seedé au démarrage **uniquement si** les
+variables sont configurées — aucune valeur par défaut, aucun compte créé sinon :
+
+```bash
+# .env (non versionné) à la racine, utilisé par docker compose
+ADMIN_EMAIL=vous@exemple.fr
+ADMIN_PASSWORD=un-mot-de-passe-de-12-caracteres-minimum
+```
+
+Le seed est idempotent : un compte existant n'est jamais modifié au redémarrage.
+Une configuration partielle (email sans mot de passe, mot de passe trop court…)
+fait échouer le démarrage plutôt que de créer un compte bancal.
+
 ---
 
 ### Source de données des blasons
@@ -136,16 +151,31 @@ et suivent le pattern : `Blason-<slug>-2014-v01-256px.png`
 |---|---|---|
 | `POST /api/v1/quiz/question` | Anonyme | ✅ |
 | `GET /health` | Anonyme | ✅ |
+| `GET /version` | Anonyme | ✅ |
 | `GET /swagger` | Anonyme | ✅ (dev uniquement) |
-| `POST /api/v1/auth/register` | Anonyme | ✅ |
-| `POST /api/v1/auth/login` | Anonyme | ✅ |
-| `GET /api/v1/catalog` | User | ✅ |
-| `GET /api/v1/catalog/{slug}` | User | ✅ |
+| `POST /api/v1/auth/login` | Anonyme (réservé admin) | ✅ |
+| `GET /api/v1/catalog` | Anonyme | ✅ |
+| `GET /api/v1/catalog/{slug}` | Anonyme | ✅ |
+| `GET /api/v1/admin/blazons/export` | Admin | ✅ |
 | `POST /api/v1/admin/blazons` | Admin | ✅ |
 | `PUT /api/v1/admin/blazons/{slug}` | Admin | ✅ |
 | `DELETE /api/v1/admin/blazons/{slug}` | Admin | ✅ |
 
 ---
+
+### Versionning et releases
+
+Le versionning (SemVer `x.y.z`, actuellement `0.x` = beta) et le [CHANGELOG](CHANGELOG.md)
+sont automatisés par [release-please](https://github.com/googleapis/release-please) :
+
+- Les messages de commits suivent [Conventional Commits](https://www.conventionalcommits.org/fr/) :
+  `fix:` → patch, `feat:` → minor (les breaking changes restent en 0.x tant que la 1.0 n'est pas décidée).
+- À chaque push sur `main`, l'action met à jour une **Release PR** (bump + changelog générés).
+- **Merger la Release PR** publie la version : tag `vX.Y.Z`, GitHub Release, changelog committé.
+
+La version vit dans `.release-please-manifest.json` et est propagée automatiquement vers
+`Directory.Build.props` (assemblies .NET, exposée sur `GET /version` et dans les logs)
+et `SevenSigils.Frontend/package.json` (affichée dans le footer via Vite).
 
 ### Crédits
 

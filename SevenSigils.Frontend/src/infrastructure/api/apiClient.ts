@@ -23,11 +23,11 @@ export class ApiClient {
     return headers
   }
 
-  async post<T>(path: string, body: unknown): Promise<T> {
+  private async request(path: string, method: string, body?: unknown): Promise<Response> {
     const response = await fetch(path, {
-      method: 'POST',
+      method,
       headers: this.buildHeaders(),
-      body: JSON.stringify(body),
+      body: body === undefined ? undefined : JSON.stringify(body),
     })
 
     if (!response.ok) {
@@ -35,20 +35,26 @@ export class ApiClient {
       throw new ApiError(response.status, text)
     }
 
-    return response.json() as Promise<T>
+    return response
   }
 
   async get<T>(path: string): Promise<T> {
-    const response = await fetch(path, {
-      method: 'GET',
-      headers: this.buildHeaders(),
-    })
-
-    if (!response.ok) {
-      const text = await response.text().catch(() => response.statusText)
-      throw new ApiError(response.status, text)
-    }
-
+    const response = await this.request(path, 'GET')
     return response.json() as Promise<T>
+  }
+
+  async post<T>(path: string, body: unknown): Promise<T> {
+    const response = await this.request(path, 'POST', body)
+    return response.json() as Promise<T>
+  }
+
+  async put<T>(path: string, body: unknown): Promise<T> {
+    const response = await this.request(path, 'PUT', body)
+    return response.json() as Promise<T>
+  }
+
+  /** DELETE renvoie 204 No Content : pas de corps à parser. */
+  async delete(path: string): Promise<void> {
+    await this.request(path, 'DELETE')
   }
 }

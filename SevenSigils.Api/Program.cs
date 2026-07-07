@@ -16,6 +16,7 @@ using SevenSigils.Infrastructure.Options;
 using SevenSigils.Infrastructure.Repositories;
 using SevenSigils.Infrastructure.Security;
 using SevenSigils.Infrastructure.Seeding;
+using System.Reflection;
 using System.Text;
 using System.Threading.RateLimiting;
 
@@ -32,6 +33,7 @@ builder.Host.UseSerilog();
 builder.Services.Configure<BlazonDataOptions>(builder.Configuration.GetSection(BlazonDataOptions.SectionName));
 builder.Services.Configure<MongoDbOptions>(builder.Configuration.GetSection(MongoDbOptions.SectionName));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<AdminSeedOptions>(builder.Configuration.GetSection(AdminSeedOptions.SectionName));
 
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
@@ -42,6 +44,7 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
 builder.Services.AddSingleton<IBlazonRepository, MongoDbBlazonRepository>();
 builder.Services.AddSingleton<IUserRepository, MongoDbUserRepository>();
 builder.Services.AddTransient<BlazonSeeder>();
+builder.Services.AddTransient<AdminUserSeeder>();
 builder.Services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddSingleton<IAccessTokenGenerator, JwtAccessTokenGenerator>();
 builder.Services.AddSingleton<IRandomProvider, CryptoRandomProvider>();
@@ -73,7 +76,7 @@ builder.Services.AddRateLimiter(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks()
@@ -95,7 +98,9 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key)
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.RequireHttpsMetadata = false;
+        // HTTPS non exigé uniquement en dev local (pas de certificat TLS sur localhost).
+        // En prod, le TLS est terminé par le reverse proxy nginx.
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
@@ -115,6 +120,22 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
+// Fail-fast : hors Development, on refuse de démarrer avec la clé placeholder,
+// une clé vide ou une clé trop courte (HS256 exige au moins 256 bits = 32 octets).
+// Lecture via le DI (config finale) et non builder.Configuration : les surcharges
+// de WebApplicationFactory (tests) ne sont appliquées qu'au moment du Build().
+var effectiveJwtKey = app.Services
+    .GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtOptions>>().Value.Key;
+if (!app.Environment.IsDevelopment()
+    && (string.IsNullOrWhiteSpace(effectiveJwtKey)
+        || effectiveJwtKey.StartsWith("CHANGE_ME", StringComparison.Ordinal)
+        || Encoding.UTF8.GetByteCount(effectiveJwtKey) < 32))
+{
+    throw new InvalidOperationException(
+        "Jwt:Key must be a strong secret of at least 32 bytes outside Development. " +
+        "Set the JWT_KEY environment variable (see docker-compose.yml).");
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -127,7 +148,16 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Version produit (Directory.Build.props) ; le suffixe "+sha" éventuel de
+// l'InformationalVersion est tronqué pour ne garder que le SemVer x.y.z.
+var appVersion = typeof(Program).Assembly
+    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+    .InformationalVersion.Split('+')[0] ?? "unknown";
+
+Log.Information("Seven Sigils API {Version} starting ({Environment})", appVersion, app.Environment.EnvironmentName);
+
 app.MapHealthChecks("/health");
+app.MapGet("/version", () => Results.Ok(new { version = appVersion }));
 app.MapControllers();
 
 if (app.Configuration.GetValue<bool?>("MongoDb:SeedOnStartup") != false)
@@ -135,6 +165,10 @@ if (app.Configuration.GetValue<bool?>("MongoDb:SeedOnStartup") != false)
     var seeder = app.Services.GetRequiredService<BlazonSeeder>();
     await seeder.SeedAsync();
 }
+
+// Sans Admin:Email / Admin:Password configurés, aucun compte n'est créé (le seeder loggue et passe).
+var adminSeeder = app.Services.GetRequiredService<AdminUserSeeder>();
+await adminSeeder.SeedAsync();
 
 app.Run();
 

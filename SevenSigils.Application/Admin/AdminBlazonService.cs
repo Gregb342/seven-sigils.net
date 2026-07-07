@@ -65,4 +65,42 @@ public sealed class AdminBlazonService : IAdminBlazonService
         if (!deleted)
             throw new BlazonNotFoundException(familySlug);
     }
+
+    public async Task<BlazonExport> ExportAsync(CancellationToken cancellationToken = default)
+    {
+        const int pageSize = 200;
+        var all = new List<Blazon>();
+        var page = 1;
+
+        for (;;)
+        {
+            var (items, totalCount) = await _repository.GetAllAsync(page, pageSize, cancellationToken);
+            all.AddRange(items);
+            if (items.Count == 0 || all.Count >= totalCount)
+                break;
+            page++;
+        }
+
+        var easyModeSlugs = all
+            .Where(b => b.IncludeInEasy)
+            .Select(b => b.FamilySlug)
+            .OrderBy(s => s, StringComparer.Ordinal)
+            .ToList();
+
+        var entries = all
+            .OrderBy(b => b.FamilySlug, StringComparer.Ordinal)
+            .ToDictionary(
+                b => b.FamilySlug,
+                b => new BlazonExportEntry(
+                    Label: b.FamilyLabel,
+                    DisplayName: b.DisplayName,
+                    Kind: b.Kind,
+                    VariantOf: b.VariantOf,
+                    IncludeInHard: b.IncludeInHard,
+                    HousePageUrl: b.HousePageUrl,
+                    Hints: b.Hints,
+                    Attribution: b.Attribution));
+
+        return new BlazonExport(easyModeSlugs, entries);
+    }
 }

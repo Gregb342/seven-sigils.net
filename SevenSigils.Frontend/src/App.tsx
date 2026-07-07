@@ -1,24 +1,33 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
 import type { Blazon, GameSettings } from './domain/models/types'
 import { CreditsFooter } from './presentation/components/CreditsFooter'
 import { EncyclopediaScreen } from './presentation/components/EncyclopediaScreen'
 import { EndScreen } from './presentation/components/EndScreen'
 import { GameScreen } from './presentation/components/GameScreen'
-import { LoginScreen } from './presentation/components/LoginScreen'
 import { StartScreen } from './presentation/components/StartScreen'
-import { useAuth } from './presentation/hooks/useAuth'
+import { CitadelScreen } from './presentation/citadel/CitadelScreen'
 import { useQuizController } from './presentation/hooks/useQuizController'
 import { ApiClient } from './infrastructure/api/apiClient'
 import { ApiBlazonRepository } from './infrastructure/repositories/ApiBlazonRepository'
+import { LocalStorageHighscoreStore } from './infrastructure/services/LocalStorageHighscoreStore'
 
 const apiClient = new ApiClient()
 const repository = new ApiBlazonRepository(apiClient)
+const highscoreStore = new LocalStorageHighscoreStore()
 
-type HomeView = 'menu' | 'login' | 'encyclopedia'
+type HomeView = 'menu' | 'encyclopedia'
 
 function App() {
-  const auth = useAuth(apiClient)
+  // Back-office accessible via l'URL /#citadel — volontairement sans lien dans l'UI joueur.
+  // Ce n'est pas une protection (l'API reste le vrai garde), juste de la discrétion.
+  const [isCitadel, setIsCitadel] = useState(() => window.location.hash === '#citadel')
+  useEffect(() => {
+    const onHashChange = () => setIsCitadel(window.location.hash === '#citadel')
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
   const { snapshot, loading, error, start, answer, nextRound, stop, goToMenu, resetError } =
     useQuizController(repository)
 
@@ -46,21 +55,10 @@ function App() {
     }
   }, [encyclopediaEntries.length, loadingEncyclopedia])
 
+  // L'encyclopédie est publique : accès direct, sans authentification.
   const openEncyclopedia = () => {
-    if (!auth.isAuthenticated) {
-      setHomeView('login')
-      return
-    }
     setHomeView('encyclopedia')
     void loadEncyclopedia()
-  }
-
-  const handleLoginSubmit = async (email: string, password: string) => {
-    const success = await auth.login(email, password)
-    if (success) {
-      setHomeView('encyclopedia')
-      void loadEncyclopedia()
-    }
   }
 
   const backToMenu = () => {
@@ -87,6 +85,17 @@ function App() {
     await start(mode, difficulty, fixedRounds)
   }
 
+  if (isCitadel) {
+    return (
+      <div className="app-shell">
+        <main className="main-content">
+          <CitadelScreen apiClient={apiClient} />
+        </main>
+        <CreditsFooter />
+      </div>
+    )
+  }
+
   return (
     <div className="app-shell">
       <main className="main-content">
@@ -96,20 +105,9 @@ function App() {
               <StartScreen
                 bestScore={snapshot.bestScore}
                 loading={loading}
-                isAuthenticated={auth.isAuthenticated}
+                highscoreStore={highscoreStore}
                 onStart={onStart}
                 onOpenEncyclopedia={openEncyclopedia}
-                onLogin={() => setHomeView('login')}
-                onLogout={auth.logout}
-              />
-            )}
-
-            {homeView === 'login' && (
-              <LoginScreen
-                onLogin={handleLoginSubmit}
-                onBack={() => setHomeView('menu')}
-                loading={auth.loading}
-                error={auth.error}
               />
             )}
 
@@ -136,7 +134,12 @@ function App() {
         )}
 
         {snapshot.status === 'finished' && (
-          <EndScreen snapshot={snapshot} onReplay={onReplay} onMainMenu={backToMenu} />
+          <EndScreen
+            snapshot={snapshot}
+            highscoreStore={highscoreStore}
+            onReplay={onReplay}
+            onMainMenu={backToMenu}
+          />
         )}
 
         {error && (

@@ -1,13 +1,13 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SevenSigils.Api.Contracts.Catalog;
 using SevenSigils.Application.Catalog;
 
 namespace SevenSigils.Api.Controllers;
 
+// Catalogue public en lecture seule : l'encyclopédie est consultable sans compte.
+// Les écritures restent dans AdminController (policy AdminOnly).
 [ApiController]
 [Route("api/v1/catalog")]
-[Authorize]
 public sealed class CatalogController : ControllerBase
 {
     private readonly ICatalogService _catalogService;
@@ -20,7 +20,6 @@ public sealed class CatalogController : ControllerBase
     [HttpGet]
     [ProducesResponseType<PagedBlazonResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -47,7 +46,6 @@ public sealed class CatalogController : ControllerBase
 
     [HttpGet("{slug}")]
     [ProducesResponseType<BlazonResponse>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetBySlug(
         [FromRoute] string slug,

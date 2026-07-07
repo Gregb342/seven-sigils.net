@@ -1,0 +1,20 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "package-name": "seven-sigils",
+      "include-component-in-tag": false,
+      "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "extra-files": [
+        "Directory.Build.props",
+        {
+          "type": "json",
+          "path": "SevenSigils.Frontend/package.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  }
+}

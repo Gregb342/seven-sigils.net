@@ -44,6 +44,13 @@ export interface RoundResult {
   correctOption: string
 }
 
+export interface HighscoreEntry {
+  pseudo: string
+  score: number
+  difficulty: Difficulty
+  dateIso: string
+}
+
 export interface SessionSnapshot {
   status: 'idle' | 'running' | 'finished'
   settings: GameSettings

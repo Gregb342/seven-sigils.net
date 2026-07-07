@@ -27,22 +27,13 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFactory>
         _factory = factory;
     }
 
+    // Le catalogue est public : l'encyclopédie doit être consultable sans compte.
     [Fact]
-    public async Task GetAll_ShouldReturn401_WhenNotAuthenticated()
-    {
-        var client = _factory.CreateClient();
-
-        var response = await client.GetAsync("/api/v1/catalog");
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
-    public async Task GetAll_ShouldReturnPagedResult_WhenAuthenticated()
+    public async Task GetAll_ShouldReturnPagedResult_WhenNotAuthenticated()
     {
         _factory.SeedBlazon(CatalogBlazon("stark", "Stark"));
         _factory.SeedBlazon(CatalogBlazon("lannister", "Lannister"));
-        var client = _factory.CreateUserClient();
+        var client = _factory.CreateClient();
 
         var response = await client.GetAsync("/api/v1/catalog?page=1&pageSize=10");
 
@@ -56,7 +47,7 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFactory>
     [Fact]
     public async Task GetAll_ShouldReturn400_WhenPaginationIsInvalid()
     {
-        var client = _factory.CreateUserClient();
+        var client = _factory.CreateClient();
 
         var response = await client.GetAsync("/api/v1/catalog?page=0&pageSize=0");
 
@@ -67,7 +58,7 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFactory>
     public async Task GetBySlug_ShouldReturnBlazon_WhenItExists()
     {
         _factory.SeedBlazon(CatalogBlazon("tyrell", "Tyrell"));
-        var client = _factory.CreateUserClient();
+        var client = _factory.CreateClient();
 
         var response = await client.GetAsync("/api/v1/catalog/tyrell");
 
@@ -79,7 +70,7 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFactory>
     [Fact]
     public async Task GetBySlug_ShouldReturn404_WhenBlazonDoesNotExist()
     {
-        var client = _factory.CreateUserClient();
+        var client = _factory.CreateClient();
 
         var response = await client.GetAsync("/api/v1/catalog/unknown-house");
 
@@ -94,6 +85,32 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFactory>
 
     private sealed record PagedBody(List<BlazonBody> Items, long TotalCount, int Page, int PageSize, int TotalPages);
     private sealed record BlazonBody(string Id, string FamilySlug, string FamilyLabel);
+}
+
+// ── Tests — Version ───────────────────────────────────────────────────────────
+
+public sealed class VersionApiTests : IClassFixture<CatalogApiFactory>
+{
+    private readonly CatalogApiFactory _factory;
+
+    public VersionApiTests(CatalogApiFactory factory)
+    {
+        _factory = factory;
+    }
+
+    [Fact]
+    public async Task GetVersion_ShouldReturnSemVer_Anonymously()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/version");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<VersionBody>();
+        body!.Version.Should().MatchRegex(@"^\d+\.\d+\.\d+$");
+    }
+
+    private sealed record VersionBody(string Version);
 }
 
 // ── Tests — Admin ─────────────────────────────────────────────────────────────
@@ -116,6 +133,34 @@ public sealed class AdminApiTests : IClassFixture<CatalogApiFactory>
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    [Fact]
+    public async Task Export_ShouldReturn401_WhenNotAuthenticated()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/v1/admin/blazons/export");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Export_ShouldReturnSnapshot_WhenAdmin()
+    {
+        _factory.SeedBlazon(AdminBlazon("export-house") with { IncludeInEasy = true });
+        var client = _factory.CreateAdminClient();
+
+        var response = await client.GetAsync("/api/v1/admin/blazons/export");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<ExportBody>();
+        body.Should().NotBeNull();
+        body!.EasyModeSlugs.Should().Contain("export-house");
+        body.Entries.Should().ContainKey("export-house");
+    }
+
+    private sealed record ExportBody(List<string> EasyModeSlugs, Dictionary<string, ExportEntryBody> Entries);
+    private sealed record ExportEntryBody(string Label, string HousePageUrl);
 
     [Fact]
     public async Task Create_ShouldReturn403_WhenUserRoleIsInsufficient()
@@ -242,7 +287,10 @@ public sealed class CatalogApiFactory : WebApplicationFactory<Program>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["MongoDb:SeedOnStartup"] = "false"
+                ["MongoDb:SeedOnStartup"] = "false",
+                // Requis par le garde-fou de Program.cs : hors Development,
+                // la clé placeholder est refusée au démarrage.
+                ["Jwt:Key"] = "TEST_ONLY_LONG_ENOUGH_SECRET_KEY_1234567890"
             });
         });
 

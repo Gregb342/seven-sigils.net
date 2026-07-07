@@ -1,4 +1,4 @@
-import { APP_VERSION } from '../../version'
+import { APP_VERSION_LABEL } from '../../version'
 
 export function CreditsFooter() {
   const currentYear = new Date().getFullYear()
@@ -30,7 +30,7 @@ export function CreditsFooter() {
           github.com/Gregb342
         </a>
       </p>
-      <p>Version : {APP_VERSION}</p>
+      <p>Version : {APP_VERSION_LABEL}</p>
     </footer>
   )
 }

@@ -1,0 +1,29 @@
+# Versionning et changelog automatisés (release-please).
+#
+# À chaque push sur main, l'action lit les commits Conventional Commits
+# (feat: → minor, fix: → patch) et maintient une "Release PR" contenant le
+# bump de version + le CHANGELOG généré. Merger cette PR crée le tag vX.Y.Z
+# et la GitHub Release. Rien ne sort tant que la Release PR n'est pas mergée.
+#
+# Prérequis côté repo (Settings → Actions → General → Workflow permissions) :
+#   - "Read and write permissions"
+#   - cocher "Allow GitHub Actions to create and approve pull requests"
+name: release-please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

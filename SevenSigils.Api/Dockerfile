@@ -2,6 +2,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
+# Directory.Build.props porte la version produit : sans lui, MSBuild
+# retombe sur 1.0.0 par défaut.
+COPY Directory.Build.props .
+
 # Copy project files for layer-cached restore
 COPY SevenSigils.Domain/SevenSigils.Domain.csproj           SevenSigils.Domain/
 COPY SevenSigils.Application/SevenSigils.Application.csproj SevenSigils.Application/
@@ -22,6 +26,13 @@ RUN dotnet publish SevenSigils.Api/SevenSigils.Api.csproj \
 # ── Runtime stage ─────────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
+
+# curl est requis par le HEALTHCHECK de docker-compose.yml : l'image aspnet
+# ne l'embarque pas. --no-install-recommends + purge des listes apt pour
+# limiter la taille et la surface d'attaque.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/publish .
 
