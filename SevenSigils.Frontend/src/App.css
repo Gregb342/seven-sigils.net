@@ -492,6 +492,15 @@
   .encyclopedia-layout {
     grid-template-columns: 1fr;
   }
+
+  /* Sur une colonne, le rail alphabétique passe au-dessus du contenu,
+     en ligne avec retour, au lieu d'une interminable colonne sous la liste. */
+  .encyclopedia-letter-rail {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    order: -1;
+  }
 }
 
 /* ── Highscores (arcade local) ─────────────────────────────────────────────── */

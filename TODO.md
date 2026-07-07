@@ -24,11 +24,6 @@ stockage, validation de fichiers, redimensionnement.
 hardcode Evrach / CC BY-SA 4.0. Si des attributions sont éditées via la
 citadel, améliorer le seeder pour honorer le champ si présent.
 
-## Encyclopédie : bug d'affichage de l'index alphabétique
-
-La barre de droite de l'encyclopédie (navigation par lettre de maison) a un
-souci d'affichage. À investiguer côté `EncyclopediaScreen.tsx` / CSS.
-
 ## Lint : 2 erreurs react-hooks préexistantes (set-state-in-effect)
 
 `npm run lint` échoue sur `EncyclopediaScreen.tsx:43` et `StartScreen.tsx:29` :

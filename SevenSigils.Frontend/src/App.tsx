@@ -68,8 +68,20 @@ function App() {
     setEncyclopediaError(null)
     setLoadingEncyclopedia(true)
     try {
-      const result = await repository.fetchPage(1, 100)
-      setEncyclopediaEntries(result.items)
+      // Tout le catalogue, page par page (l'API plafonne pageSize à 100) :
+      // ne charger que la première page tronquait l'encyclopédie et son
+      // index alphabétique aux ~100 premières maisons.
+      const all: Blazon[] = []
+      let page = 1
+      for (;;) {
+        const result = await repository.fetchPage(page, 100)
+        all.push(...result.items)
+        if (all.length >= result.totalCount || result.items.length === 0) break
+        page++
+      }
+      // L'API trie par slug ; l'affichage (sections, index) est par label.
+      all.sort((a, b) => a.familyLabel.localeCompare(b.familyLabel, 'fr'))
+      setEncyclopediaEntries(all)
     } catch (e) {
       setEncyclopediaError(e instanceof Error ? e.message : 'Erreur inconnue')
     } finally {
