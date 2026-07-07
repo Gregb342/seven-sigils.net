@@ -32,6 +32,12 @@ export interface AdminBlazon {
 /** Payload d'écriture : create = tout, update = tout sauf familySlug (porté par l'URL). */
 export type BlazonWritePayload = Omit<AdminBlazon, 'id'>
 
+export interface AdminQuote {
+  id: string
+  tier: string
+  text: string
+}
+
 interface LoginResponse {
   accessToken: string
   email: string
@@ -79,6 +85,25 @@ export class CitadelApi {
 
   createBlazon(payload: BlazonWritePayload): Promise<AdminBlazon> {
     return this.client.post<AdminBlazon>('/api/v1/admin/blazons', payload)
+  }
+
+  fetchQuotes(): Promise<AdminQuote[]> {
+    return this.client.get<AdminQuote[]>('/api/v1/quotes')
+  }
+
+  createQuote(tier: string, text: string): Promise<AdminQuote> {
+    return this.client.post<AdminQuote>('/api/v1/admin/quotes', { tier, text })
+  }
+
+  updateQuote(id: string, tier: string, text: string): Promise<AdminQuote> {
+    return this.client.put<AdminQuote>(`/api/v1/admin/quotes/${encodeURIComponent(id)}`, {
+      tier,
+      text,
+    })
+  }
+
+  deleteQuote(id: string): Promise<void> {
+    return this.client.delete(`/api/v1/admin/quotes/${encodeURIComponent(id)}`)
   }
 
   updateBlazon(slug: string, payload: Omit<BlazonWritePayload, 'familySlug'>): Promise<AdminBlazon> {

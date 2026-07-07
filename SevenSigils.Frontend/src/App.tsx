@@ -11,22 +11,28 @@ import { CitadelScreen } from './presentation/citadel/CitadelScreen'
 import { useQuizController } from './presentation/hooks/useQuizController'
 import { ApiClient } from './infrastructure/api/apiClient'
 import { ApiBlazonRepository } from './infrastructure/repositories/ApiBlazonRepository'
+import { ApiQuotesRepository } from './infrastructure/repositories/ApiQuotesRepository'
 import { LocalStorageHighscoreStore } from './infrastructure/services/LocalStorageHighscoreStore'
 import { LocalStorageCompetitiveScoreStore } from './infrastructure/services/LocalStorageCompetitiveScoreStore'
 
 const apiClient = new ApiClient()
 const repository = new ApiBlazonRepository(apiClient)
+const quotesRepository = new ApiQuotesRepository(apiClient)
 const highscoreStore = new LocalStorageHighscoreStore()
 const competitiveStore = new LocalStorageCompetitiveScoreStore()
 
 type HomeView = 'menu' | 'encyclopedia'
 
+// Back-office accessible via /#citadel ou /citadel (le fallback SPA de nginx sert
+// index.html pour les deux) — volontairement sans lien dans l'UI joueur.
+// Ce n'est pas une protection (l'API reste le vrai garde), juste de la discrétion.
+const isCitadelLocation = () =>
+  window.location.hash === '#citadel' || window.location.pathname === '/citadel'
+
 function App() {
-  // Back-office accessible via l'URL /#citadel — volontairement sans lien dans l'UI joueur.
-  // Ce n'est pas une protection (l'API reste le vrai garde), juste de la discrétion.
-  const [isCitadel, setIsCitadel] = useState(() => window.location.hash === '#citadel')
+  const [isCitadel, setIsCitadel] = useState(isCitadelLocation)
   useEffect(() => {
-    const onHashChange = () => setIsCitadel(window.location.hash === '#citadel')
+    const onHashChange = () => setIsCitadel(isCitadelLocation())
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
@@ -148,6 +154,7 @@ function App() {
             snapshot={snapshot}
             highscoreStore={highscoreStore}
             competitiveStore={competitiveStore}
+            quotesRepository={quotesRepository}
             onReplay={onReplay}
             onMainMenu={backToMenu}
           />
