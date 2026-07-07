@@ -11,11 +11,13 @@ import { CitadelScreen } from './presentation/citadel/CitadelScreen'
 import { useQuizController } from './presentation/hooks/useQuizController'
 import { ApiClient } from './infrastructure/api/apiClient'
 import { ApiBlazonRepository } from './infrastructure/repositories/ApiBlazonRepository'
+import { ApiQuotesRepository } from './infrastructure/repositories/ApiQuotesRepository'
 import { LocalStorageHighscoreStore } from './infrastructure/services/LocalStorageHighscoreStore'
 import { LocalStorageCompetitiveScoreStore } from './infrastructure/services/LocalStorageCompetitiveScoreStore'
 
 const apiClient = new ApiClient()
 const repository = new ApiBlazonRepository(apiClient)
+const quotesRepository = new ApiQuotesRepository(apiClient)
 const highscoreStore = new LocalStorageHighscoreStore()
 const competitiveStore = new LocalStorageCompetitiveScoreStore()
 
@@ -148,6 +150,7 @@ function App() {
             snapshot={snapshot}
             highscoreStore={highscoreStore}
             competitiveStore={competitiveStore}
+            quotesRepository={quotesRepository}
             onReplay={onReplay}
             onMainMenu={backToMenu}
           />

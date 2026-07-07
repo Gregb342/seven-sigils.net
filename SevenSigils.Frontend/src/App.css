@@ -968,3 +968,23 @@
   gap: 0.4rem;
   margin-bottom: 0.6rem;
 }
+
+/* Citadel — panneau citations */
+
+.quotes-panel {
+  text-align: left;
+}
+
+.quotes-tier {
+  margin: 0.9rem 0;
+}
+
+.quotes-tier h3 {
+  margin: 0 0 0.4rem;
+}
+
+.quotes-tier-key {
+  color: var(--ink-dim);
+  font-weight: 400;
+  font-size: 0.8rem;
+}

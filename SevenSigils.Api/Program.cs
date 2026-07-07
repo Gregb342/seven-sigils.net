@@ -9,6 +9,7 @@ using SevenSigils.Api.Validation;
 using SevenSigils.Application.Admin;
 using SevenSigils.Application.Auth;
 using SevenSigils.Application.Catalog;
+using SevenSigils.Application.Quotes;
 using SevenSigils.Application.Services;
 using SevenSigils.Domain.Abstractions;
 using SevenSigils.Api.HealthChecks;
@@ -43,8 +44,10 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
 
 builder.Services.AddSingleton<IBlazonRepository, MongoDbBlazonRepository>();
 builder.Services.AddSingleton<IUserRepository, MongoDbUserRepository>();
+builder.Services.AddSingleton<IQuoteRepository, MongoDbQuoteRepository>();
 builder.Services.AddTransient<BlazonSeeder>();
 builder.Services.AddTransient<AdminUserSeeder>();
+builder.Services.AddTransient<QuoteSeeder>();
 builder.Services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddSingleton<IAccessTokenGenerator, JwtAccessTokenGenerator>();
 builder.Services.AddSingleton<IRandomProvider, CryptoRandomProvider>();
@@ -52,6 +55,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IQuizQuestionService, QuizQuestionService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<IAdminBlazonService, AdminBlazonService>();
+builder.Services.AddScoped<IQuoteService, QuoteService>();
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -164,6 +168,9 @@ if (app.Configuration.GetValue<bool?>("MongoDb:SeedOnStartup") != false)
 {
     var seeder = app.Services.GetRequiredService<BlazonSeeder>();
     await seeder.SeedAsync();
+
+    var quoteSeeder = app.Services.GetRequiredService<QuoteSeeder>();
+    await quoteSeeder.SeedAsync();
 }
 
 // Sans Admin:Email / Admin:Password configurés, aucun compte n'est créé (le seeder loggue et passe).

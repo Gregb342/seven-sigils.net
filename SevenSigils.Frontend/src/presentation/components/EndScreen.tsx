@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { CompetitiveEntry, HighscoreEntry, SessionSnapshot } from '../../domain/models/types'
-import type { CompetitiveScoreStore, HighscoreStore } from '../../domain/ports'
+import type { CompetitiveScoreStore, HighscoreStore, QuotesRepository } from '../../domain/ports'
 import { PSEUDO_MAX_LENGTH, isValidPseudo, sanitizePseudo } from '../../domain/pseudo'
 import {
   POINTS_POOL,
@@ -18,6 +18,7 @@ interface EndScreenProps {
   snapshot: SessionSnapshot
   highscoreStore: HighscoreStore
   competitiveStore: CompetitiveScoreStore
+  quotesRepository: QuotesRepository
   onReplay: () => Promise<void>
   onMainMenu: () => void
 }
@@ -26,6 +27,7 @@ export function EndScreen({
   snapshot,
   highscoreStore,
   competitiveStore,
+  quotesRepository,
   onReplay,
   onMainMenu,
 }: EndScreenProps) {
@@ -35,6 +37,7 @@ export function EndScreen({
     <CompetitiveEnd
       snapshot={snapshot}
       competitiveStore={competitiveStore}
+      quotesRepository={quotesRepository}
       onReplay={onReplay}
       onMainMenu={onMainMenu}
     />
@@ -53,11 +56,13 @@ export function EndScreen({
 function CompetitiveEnd({
   snapshot,
   competitiveStore,
+  quotesRepository,
   onReplay,
   onMainMenu,
 }: {
   snapshot: SessionSnapshot
   competitiveStore: CompetitiveScoreStore
+  quotesRepository: QuotesRepository
   onReplay: () => Promise<void>
   onMainMenu: () => void
 }) {
@@ -68,8 +73,26 @@ function CompetitiveEnd({
   const tier = computeTier(snapshot.score, rounds)
   const official = isOfficialFormat(snapshot.settings)
 
-  // useState avec initialiseur : la citation ne change pas à chaque re-render.
-  const [quote] = useState(() => pickQuote(tier))
+  // Fallback embarqué immédiat, remplacé par une citation servie par l'API si
+  // disponible (éditable via la citadel) — l'échec réseau est silencieux.
+  const [quote, setQuote] = useState(() => pickQuote(tier))
+  useEffect(() => {
+    let cancelled = false
+    quotesRepository
+      .fetchQuotesByTier()
+      .then((byTier) => {
+        const pool = byTier[tier]
+        if (!cancelled && pool && pool.length > 0) {
+          setQuote(pool[Math.floor(Math.random() * pool.length)])
+        }
+      })
+      .catch(() => {
+        // Le fallback local reste affiché.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [quotesRepository, tier])
   const [shareFeedback, setShareFeedback] = useState<string | null>(null)
   const [pseudo, setPseudo] = useState(() => competitiveStore.getLastPseudo())
   const [savedTop, setSavedTop] = useState<CompetitiveEntry[] | null>(null)

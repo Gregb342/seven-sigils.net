@@ -1,4 +1,5 @@
 import type { Blazon, CompetitiveEntry, Difficulty, HighscoreEntry, Question } from './models/types'
+import type { CompetitiveTier } from './competitiveScoring'
 
 export interface QuizRepository {
   fetchQuestion(difficulty: Difficulty, excludedIds: string[]): Promise<Question>
@@ -20,6 +21,11 @@ export interface HighscoreStore {
   add(entry: HighscoreEntry): HighscoreEntry[]
   /** Dernier pseudo utilisé, pour préremplir la saisie (chaîne vide si aucun). */
   getLastPseudo(): string
+}
+
+export interface QuotesRepository {
+  /** Citations de fin de partie groupées par palier (peut être partiel ou vide). */
+  fetchQuotesByTier(): Promise<Partial<Record<CompetitiveTier, string[]>>>
 }
 
 export interface CompetitiveScoreStore {

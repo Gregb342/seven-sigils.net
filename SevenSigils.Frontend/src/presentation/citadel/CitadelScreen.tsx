@@ -6,6 +6,7 @@ import {
   type BlazonWritePayload,
 } from '../../infrastructure/api/citadelApi'
 import { BlazonForm } from './BlazonForm'
+import { QuotesPanel } from './QuotesPanel'
 
 interface CitadelScreenProps {
   apiClient: ApiClient
@@ -23,6 +24,7 @@ export function CitadelScreen({ apiClient }: CitadelScreenProps) {
   const [password, setPassword] = useState('')
   const [blazons, setBlazons] = useState<AdminBlazon[]>([])
   const [view, setView] = useState<View>({ kind: 'list' })
+  const [section, setSection] = useState<'blazons' | 'quotes'>('blazons')
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -177,20 +179,25 @@ export function CitadelScreen({ apiClient }: CitadelScreenProps) {
   return (
     <section className="card citadel-list">
       <p className="eyebrow">Seven Sigils — Citadel</p>
-      <h1>Blasons ({blazons.length})</h1>
 
-      <div className="citadel-toolbar">
-        <input
-          type="search"
-          value={search}
-          placeholder="Filtrer par slug ou label…"
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <button type="button" className="primary-btn" onClick={() => setView({ kind: 'create' })} disabled={busy}>
-          Nouveau blason
+      <div className="mode-switch" role="tablist" aria-label="Section d'administration">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={section === 'blazons'}
+          className={section === 'blazons' ? 'mode-tab mode-tab--active' : 'mode-tab'}
+          onClick={() => setSection('blazons')}
+        >
+          Blasons
         </button>
-        <button type="button" className="ghost-btn" onClick={logout}>
-          Se déconnecter
+        <button
+          type="button"
+          role="tab"
+          aria-selected={section === 'quotes'}
+          className={section === 'quotes' ? 'mode-tab mode-tab--active' : 'mode-tab'}
+          onClick={() => setSection('quotes')}
+        >
+          Citations
         </button>
       </div>
 
@@ -203,26 +210,56 @@ export function CitadelScreen({ apiClient }: CitadelScreenProps) {
         </div>
       )}
 
-      <ul className="citadel-rows">
-        {visible.map((blazon) => (
-          <li key={blazon.id} className="citadel-row">
-            <span className="citadel-row-slug">{blazon.familySlug}</span>
-            <span className="citadel-row-label">{blazon.familyLabel}</span>
-            <span className="citadel-row-flags">
-              {blazon.includeInEasy ? 'facile' : ''} {blazon.includeInHard ? 'difficile' : ''}
-            </span>
-            <span className="citadel-row-actions">
-              <button type="button" className="ghost-btn" onClick={() => setView({ kind: 'edit', blazon })} disabled={busy}>
-                Modifier
-              </button>
-              <button type="button" className="ghost-btn citadel-danger" onClick={() => void remove(blazon)} disabled={busy}>
-                Supprimer
-              </button>
-            </span>
-          </li>
-        ))}
-      </ul>
-      {visible.length === 0 && <p>Aucun blason ne correspond au filtre.</p>}
+      {section === 'quotes' ? (
+        <>
+          <QuotesPanel api={api} busy={busy} setBusy={setBusy} onError={handleError} />
+          <div className="citadel-toolbar">
+            <button type="button" className="ghost-btn" onClick={logout}>
+              Se déconnecter
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <h1>Blasons ({blazons.length})</h1>
+
+          <div className="citadel-toolbar">
+            <input
+              type="search"
+              value={search}
+              placeholder="Filtrer par slug ou label…"
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <button type="button" className="primary-btn" onClick={() => setView({ kind: 'create' })} disabled={busy}>
+              Nouveau blason
+            </button>
+            <button type="button" className="ghost-btn" onClick={logout}>
+              Se déconnecter
+            </button>
+          </div>
+
+          <ul className="citadel-rows">
+            {visible.map((blazon) => (
+              <li key={blazon.id} className="citadel-row">
+                <span className="citadel-row-slug">{blazon.familySlug}</span>
+                <span className="citadel-row-label">{blazon.familyLabel}</span>
+                <span className="citadel-row-flags">
+                  {blazon.includeInEasy ? 'facile' : ''} {blazon.includeInHard ? 'difficile' : ''}
+                </span>
+                <span className="citadel-row-actions">
+                  <button type="button" className="ghost-btn" onClick={() => setView({ kind: 'edit', blazon })} disabled={busy}>
+                    Modifier
+                  </button>
+                  <button type="button" className="ghost-btn citadel-danger" onClick={() => void remove(blazon)} disabled={busy}>
+                    Supprimer
+                  </button>
+                </span>
+              </li>
+            ))}
+          </ul>
+          {visible.length === 0 && <p>Aucun blason ne correspond au filtre.</p>}
+        </>
+      )}
     </section>
   )
 }
