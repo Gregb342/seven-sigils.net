@@ -109,6 +109,34 @@ public sealed class AdminApiTests : IClassFixture<CatalogApiFactory>
     }
 
     [Fact]
+    public async Task Export_ShouldReturn401_WhenNotAuthenticated()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/v1/admin/blazons/export");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Export_ShouldReturnSnapshot_WhenAdmin()
+    {
+        _factory.SeedBlazon(AdminBlazon("export-house") with { IncludeInEasy = true });
+        var client = _factory.CreateAdminClient();
+
+        var response = await client.GetAsync("/api/v1/admin/blazons/export");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<ExportBody>();
+        body.Should().NotBeNull();
+        body!.EasyModeSlugs.Should().Contain("export-house");
+        body.Entries.Should().ContainKey("export-house");
+    }
+
+    private sealed record ExportBody(List<string> EasyModeSlugs, Dictionary<string, ExportEntryBody> Entries);
+    private sealed record ExportEntryBody(string Label, string HousePageUrl);
+
+    [Fact]
     public async Task Create_ShouldReturn403_WhenUserRoleIsInsufficient()
     {
         var client = _factory.CreateUserClient();

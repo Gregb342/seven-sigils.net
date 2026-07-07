@@ -20,6 +20,15 @@ public sealed class AdminController : ControllerBase
         _adminService = adminService;
     }
 
+    // Sauvegarde de la collection au format blazonDb.json (Mongo = source de vérité).
+    // Le DTO applicatif est renvoyé tel quel : c'est déjà le format d'échange voulu.
+    [HttpGet("export")]
+    [ProducesResponseType<BlazonExport>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> Export(CancellationToken cancellationToken = default) =>
+        Ok(await _adminService.ExportAsync(cancellationToken));
+
     [HttpPost]
     [ProducesResponseType<BlazonResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
