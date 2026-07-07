@@ -13,6 +13,7 @@ import {
 import { APP_VERSION_LABEL } from '../../version'
 import { HighscoreTable } from './HighscoreTable'
 import { CompetitiveScoreTable } from './CompetitiveScoreTable'
+import { DifficultyChip } from './DifficultyChip'
 
 interface StartScreenProps {
   bestScore: number
@@ -39,6 +40,8 @@ export function StartScreen({
   const [fixedRounds, setFixedRounds] = useState(10)
   const [timerSeconds, setTimerSeconds] = useState(OFFICIAL_TIMER_SECONDS)
   const [boardView, setBoardView] = useState<BoardView>('none')
+  // La difficulté consultée au classement est indépendante de celle du formulaire de jeu.
+  const [boardDifficulty, setBoardDifficulty] = useState<Difficulty>('easy')
 
   const isCompetitive = gameType === 'competitive'
   const maxFixedRounds = isCompetitive ? MAX_ROUNDS : difficulty === 'easy' ? 30 : 40
@@ -191,20 +194,39 @@ export function StartScreen({
         </button>
       </div>
 
-      {boardView === 'classic' && (
+      {boardView !== 'none' && (
         <div className="highscore-board">
-          <h3>Meilleurs scores — {difficulty === 'easy' ? 'Facile' : 'Difficile'}</h3>
-          <HighscoreTable entries={highscoreStore.getTop(difficulty)} />
-        </div>
-      )}
+          <div className="board-difficulty-switch" role="tablist" aria-label="Difficulté du classement">
+            {(['easy', 'hard'] as const).map((level) => (
+              <button
+                key={level}
+                type="button"
+                role="tab"
+                aria-selected={boardDifficulty === level}
+                className={boardDifficulty === level ? 'mode-tab mode-tab--active' : 'mode-tab'}
+                onClick={() => setBoardDifficulty(level)}
+              >
+                {level === 'easy' ? 'Facile' : 'Difficile'}
+              </button>
+            ))}
+          </div>
 
-      {boardView === 'competitive' && (
-        <div className="highscore-board">
-          <h3>
-            Classement officiel ⚔️ — {difficulty === 'easy' ? 'Facile' : 'Difficile'} (10
-            manches · 8 s)
-          </h3>
-          <CompetitiveScoreTable entries={competitiveStore.getTop(difficulty)} />
+          {boardView === 'classic' ? (
+            <>
+              <h3>
+                Meilleurs scores <DifficultyChip difficulty={boardDifficulty} />
+              </h3>
+              <HighscoreTable entries={highscoreStore.getTop(boardDifficulty)} />
+            </>
+          ) : (
+            <>
+              <h3>
+                Classement officiel ⚔️ <DifficultyChip difficulty={boardDifficulty} /> (10
+                manches · 8 s)
+              </h3>
+              <CompetitiveScoreTable entries={competitiveStore.getTop(boardDifficulty)} />
+            </>
+          )}
         </div>
       )}
 

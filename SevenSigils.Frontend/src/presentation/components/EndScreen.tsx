@@ -12,6 +12,7 @@ import {
 import { TIER_CONTENT, pickQuote } from '../../resources/quotes'
 import { HighscoreTable } from './HighscoreTable'
 import { CompetitiveScoreTable } from './CompetitiveScoreTable'
+import { DifficultyChip } from './DifficultyChip'
 
 interface EndScreenProps {
   snapshot: SessionSnapshot
@@ -106,7 +107,9 @@ function CompetitiveEnd({
 
   return (
     <section className={`card end-card tier-${tier}${isNewRecord ? ' celebrate' : ''}`}>
-      <p className="eyebrow">Partie compétitive terminée</p>
+      <p className="eyebrow">
+        Partie compétitive terminée <DifficultyChip difficulty={difficulty} />
+      </p>
       <p className="tier-title">{TIER_CONTENT[tier].title}</p>
       <h2>
         {snapshot.score} / {maxScore}
@@ -174,7 +177,9 @@ function CompetitiveEnd({
             {!isNewRecord && madeTheBoard && (
               <p className="record-banner record-banner--soft">⚔️ Tu entres au classement !</p>
             )}
-            <h3>Classement officiel — {difficulty === 'easy' ? 'Facile' : 'Difficile'}</h3>
+            <h3>
+              Classement officiel <DifficultyChip difficulty={difficulty} />
+            </h3>
             <CompetitiveScoreTable entries={savedTop} highlightIndex={savedIndex} />
             {!madeTheBoard && (
               <p className="highscore-empty">Pas dans le top 10 cette fois… entraîne-toi !</p>
@@ -272,7 +277,9 @@ function ClassicEnd({
         </div>
       ) : (
         <div className="highscore-board">
-          <h3>Meilleurs scores — {difficulty === 'easy' ? 'Facile' : 'Difficile'}</h3>
+          <h3>
+            Meilleurs scores <DifficultyChip difficulty={difficulty} />
+          </h3>
           <HighscoreTable entries={savedTop} highlightIndex={savedIndex} />
           {savedIndex === undefined && (
             <p className="highscore-empty">Pas dans le top 10 cette fois… entraîne-toi !</p>
