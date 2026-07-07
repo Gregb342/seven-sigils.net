@@ -686,3 +686,254 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Mode compétitif ───────────────────────────────────────────────────────── */
+
+.mode-switch {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0.8rem 0 0.6rem;
+  justify-content: center;
+}
+
+.mode-tab {
+  padding: 0.45rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-dim);
+  font: inherit;
+  cursor: pointer;
+}
+
+.mode-tab--active {
+  border-color: var(--accent-1);
+  background: color-mix(in srgb, var(--accent-1) 14%, transparent);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.format-badge {
+  margin: 0.4rem 0 0.6rem;
+  font-size: 0.88rem;
+  color: var(--ink-dim);
+}
+
+.format-badge--official {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Barre de timer */
+
+.timer-track {
+  position: relative;
+  height: 1.35rem;
+  margin: 0.6rem 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--line) 30%, transparent);
+}
+
+.timer-fill {
+  height: 100%;
+  background: #3f9d63;
+  transition: background-color 0.3s ease;
+}
+
+.timer-fill.warn {
+  background: #c98a1b;
+}
+
+.timer-fill.danger {
+  background: #b3261e;
+}
+
+.timer-track.danger {
+  animation: timer-pulse 0.5s ease-in-out infinite;
+}
+
+.timer-seconds {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+@keyframes timer-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+
+.game-card--danger {
+  animation: card-shake 0.4s ease-in-out infinite;
+}
+
+@keyframes card-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-1px); }
+  75% { transform: translateX(1px); }
+}
+
+/* Compte à rebours 3-2-1-GO */
+
+.pre-countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--ink) 55%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.pre-countdown-step {
+  font-size: 4.5rem;
+  font-weight: 800;
+  color: #fff;
+  animation: pre-step-pop 0.8s ease-out;
+}
+
+@keyframes pre-step-pop {
+  from {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.game-card {
+  position: relative;
+}
+
+/* Badges clavier sur les options */
+
+.key-badge {
+  display: inline-block;
+  min-width: 1.2rem;
+  margin-right: 0.45rem;
+  padding: 0 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+}
+
+/* Streak */
+
+.streak-on {
+  color: #c9541b;
+}
+
+.streak-off {
+  color: var(--ink-dim);
+}
+
+/* Écran de fin compétitif */
+
+.tier-title {
+  margin: 0.2rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tier-quote {
+  margin: 0.6rem auto 0.8rem;
+  max-width: 34rem;
+  font-style: italic;
+  color: var(--ink-dim);
+}
+
+.end-card.tier-legendary .tier-title { color: #a8871c; }
+.end-card.tier-strong .tier-title { color: #3f9d63; }
+.end-card.tier-average .tier-title { color: var(--ink-dim); }
+.end-card.tier-grim .tier-title { color: #7ba7c9; }
+
+.end-stats {
+  display: flex;
+  gap: 1.4rem;
+  justify-content: center;
+  margin: 0.6rem 0;
+}
+
+.end-stats div {
+  text-align: center;
+}
+
+.end-stats dt {
+  font-size: 0.78rem;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.end-stats dd {
+  margin: 0.1rem 0 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.share-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: center;
+  margin: 0.5rem 0;
+  flex-wrap: wrap;
+}
+
+.share-feedback {
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+
+.record-banner {
+  margin: 0.4rem 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #a8871c;
+  animation: record-pop 0.6s ease-out;
+}
+
+.record-banner--soft {
+  color: var(--ink);
+}
+
+.celebrate {
+  animation: celebrate-glow 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes record-pop {
+  from { opacity: 0; transform: scale(1.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes celebrate-glow {
+  from { box-shadow: 0 0 0 rgba(168, 135, 28, 0); }
+  to { box-shadow: 0 0 22px rgba(168, 135, 28, 0.45); }
+}
+
+/* Colonne temps du classement compétitif */
+
+.highscore-row {
+  grid-template-columns: 2rem 1fr auto auto;
+}
+
+.highscore-time {
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}

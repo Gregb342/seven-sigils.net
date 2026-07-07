@@ -1,9 +1,9 @@
 import type { HighscoreStore } from '../../domain/ports'
 import type { Difficulty, HighscoreEntry } from '../../domain/models/types'
 import { isValidPseudo } from '../../domain/pseudo'
+import { readLastPseudo, saveLastPseudo } from './lastPseudo'
 
 const HIGHSCORES_KEY = 'seven_sigils_highscores'
-const LAST_PSEUDO_KEY = 'seven_sigils_last_pseudo'
 const MAX_ENTRIES_PER_DIFFICULTY = 10
 
 const DIFFICULTIES: readonly Difficulty[] = ['easy', 'hard']
@@ -45,17 +45,12 @@ export class LocalStorageHighscoreStore implements HighscoreStore {
       .slice(0, MAX_ENTRIES_PER_DIFFICULTY)
 
     this.write([...others, ...top])
-    this.saveLastPseudo(entry.pseudo)
+    saveLastPseudo(entry.pseudo)
     return top
   }
 
   getLastPseudo(): string {
-    try {
-      const raw = window.localStorage.getItem(LAST_PSEUDO_KEY)
-      return raw !== null && isValidPseudo(raw) ? raw : ''
-    } catch {
-      return ''
-    }
+    return readLastPseudo()
   }
 
   private readAll(): HighscoreEntry[] {
@@ -75,14 +70,6 @@ export class LocalStorageHighscoreStore implements HighscoreStore {
       window.localStorage.setItem(HIGHSCORES_KEY, JSON.stringify(entries))
     } catch {
       // Écriture impossible (storage plein, mode privé…) : le jeu continue sans persistance.
-    }
-  }
-
-  private saveLastPseudo(pseudo: string): void {
-    try {
-      window.localStorage.setItem(LAST_PSEUDO_KEY, pseudo)
-    } catch {
-      // Idem : échec non bloquant.
     }
   }
 }
