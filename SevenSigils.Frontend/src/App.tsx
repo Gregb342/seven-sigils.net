@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
 import type { Blazon, GameSettings } from './domain/models/types'
 import { CreditsFooter } from './presentation/components/CreditsFooter'
@@ -6,6 +6,7 @@ import { EncyclopediaScreen } from './presentation/components/EncyclopediaScreen
 import { EndScreen } from './presentation/components/EndScreen'
 import { GameScreen } from './presentation/components/GameScreen'
 import { StartScreen } from './presentation/components/StartScreen'
+import { CitadelScreen } from './presentation/citadel/CitadelScreen'
 import { useQuizController } from './presentation/hooks/useQuizController'
 import { ApiClient } from './infrastructure/api/apiClient'
 import { ApiBlazonRepository } from './infrastructure/repositories/ApiBlazonRepository'
@@ -18,6 +19,15 @@ const highscoreStore = new LocalStorageHighscoreStore()
 type HomeView = 'menu' | 'encyclopedia'
 
 function App() {
+  // Back-office accessible via l'URL /#citadel — volontairement sans lien dans l'UI joueur.
+  // Ce n'est pas une protection (l'API reste le vrai garde), juste de la discrétion.
+  const [isCitadel, setIsCitadel] = useState(() => window.location.hash === '#citadel')
+  useEffect(() => {
+    const onHashChange = () => setIsCitadel(window.location.hash === '#citadel')
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
   const { snapshot, loading, error, start, answer, nextRound, stop, goToMenu, resetError } =
     useQuizController(repository)
 
@@ -73,6 +83,17 @@ function App() {
   const onReplay = async () => {
     const { mode, difficulty, fixedRounds } = lastSettingsRef.current
     await start(mode, difficulty, fixedRounds)
+  }
+
+  if (isCitadel) {
+    return (
+      <div className="app-shell">
+        <main className="main-content">
+          <CitadelScreen apiClient={apiClient} />
+        </main>
+        <CreditsFooter />
+      </div>
+    )
   }
 
   return (
