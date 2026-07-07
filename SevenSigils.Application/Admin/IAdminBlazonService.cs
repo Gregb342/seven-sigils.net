@@ -9,4 +9,6 @@ public interface IAdminBlazonService
     Task<BlazonDto> UpdateAsync(string familySlug, UpdateBlazonCommand command, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(string familySlug, CancellationToken cancellationToken = default);
+
+    Task<BlazonExport> ExportAsync(CancellationToken cancellationToken = default);
 }

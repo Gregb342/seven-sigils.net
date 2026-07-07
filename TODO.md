@@ -1,5 +1,19 @@
 # TODO — points connus, reportés volontairement
 
+## Back-office : upload des images de blasons
+
+Les PNG vivent dans `SevenSigils.Frontend/public/blazons/` (buildés dans
+l'image nginx). Créer un blason via la citadel ne suffit donc pas à afficher
+son image : il faut copier le PNG à la main et rebuilder. Chantier à part :
+stockage, validation de fichiers, redimensionnement.
+
+## Export : l'attribution n'est pas réimportée par le seeder
+
+`GET /api/v1/admin/blazons/export` inclut l'attribution de chaque blason
+(fidélité de sauvegarde), mais `BlazonSeeder` l'ignore à l'import et
+hardcode Evrach / CC BY-SA 4.0. Si des attributions sont éditées via la
+citadel, améliorer le seeder pour honorer le champ si présent.
+
 ## Encyclopédie : bug d'affichage de l'index alphabétique
 
 La barre de droite de l'encyclopédie (navigation par lettre de maison) a un

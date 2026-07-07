@@ -40,6 +40,37 @@ public sealed class AdminBlazonServiceTests
             .WithMessage("*stark*");
     }
 
+    // ── ExportAsync ───────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task ExportAsync_ShouldReturnEntriesKeyedBySlug_WithEasyModeSlugs()
+    {
+        var easy = CreateBlazon("stark", "Stark") with { IncludeInEasy = true };
+        var hardOnly = CreateBlazon("aemonrivers", "Aemonrivers") with { IncludeInEasy = false };
+        var repo = new FakeBlazonRepository(easy, hardOnly);
+        var sut = new AdminBlazonService(repo);
+
+        var export = await sut.ExportAsync();
+
+        export.EasyModeSlugs.Should().ContainSingle().Which.Should().Be("stark");
+        export.Entries.Keys.Should().BeEquivalentTo("aemonrivers", "stark");
+        export.Entries["stark"].Label.Should().Be("Stark");
+        export.Entries["stark"].Attribution.Should().Be(easy.Attribution);
+    }
+
+    [Fact]
+    public async Task ExportAsync_ShouldPageThroughTheWholeCollection()
+    {
+        // 250 éléments > pageSize interne (200) : vérifie que la boucle de pagination agrège tout.
+        var many = Enumerable.Range(1, 250).Select(i => CreateBlazon($"house-{i:D3}")).ToArray();
+        var repo = new FakeBlazonRepository(many);
+        var sut = new AdminBlazonService(repo);
+
+        var export = await sut.ExportAsync();
+
+        export.Entries.Should().HaveCount(250);
+    }
+
     // ── UpdateAsync ───────────────────────────────────────────────────────────
 
     [Fact]

@@ -155,6 +155,7 @@ et suivent le pattern : `Blason-<slug>-2014-v01-256px.png`
 | `POST /api/v1/auth/login` | Anonyme (réservé admin) | ✅ |
 | `GET /api/v1/catalog` | Anonyme | ✅ |
 | `GET /api/v1/catalog/{slug}` | Anonyme | ✅ |
+| `GET /api/v1/admin/blazons/export` | Admin | ✅ |
 | `POST /api/v1/admin/blazons` | Admin | ✅ |
 | `PUT /api/v1/admin/blazons/{slug}` | Admin | ✅ |
 | `DELETE /api/v1/admin/blazons/{slug}` | Admin | ✅ |
