@@ -2,6 +2,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
+# Directory.Build.props porte la version produit : sans lui, MSBuild
+# retombe sur 1.0.0 par défaut.
+COPY Directory.Build.props .
+
 # Copy project files for layer-cached restore
 COPY SevenSigils.Domain/SevenSigils.Domain.csproj           SevenSigils.Domain/
 COPY SevenSigils.Application/SevenSigils.Application.csproj SevenSigils.Application/

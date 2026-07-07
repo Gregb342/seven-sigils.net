@@ -151,6 +151,7 @@ et suivent le pattern : `Blason-<slug>-2014-v01-256px.png`
 |---|---|---|
 | `POST /api/v1/quiz/question` | Anonyme | ✅ |
 | `GET /health` | Anonyme | ✅ |
+| `GET /version` | Anonyme | ✅ |
 | `GET /swagger` | Anonyme | ✅ (dev uniquement) |
 | `POST /api/v1/auth/login` | Anonyme (réservé admin) | ✅ |
 | `GET /api/v1/catalog` | Anonyme | ✅ |
@@ -161,6 +162,20 @@ et suivent le pattern : `Blason-<slug>-2014-v01-256px.png`
 | `DELETE /api/v1/admin/blazons/{slug}` | Admin | ✅ |
 
 ---
+
+### Versionning et releases
+
+Le versionning (SemVer `x.y.z`, actuellement `0.x` = beta) et le [CHANGELOG](CHANGELOG.md)
+sont automatisés par [release-please](https://github.com/googleapis/release-please) :
+
+- Les messages de commits suivent [Conventional Commits](https://www.conventionalcommits.org/fr/) :
+  `fix:` → patch, `feat:` → minor (les breaking changes restent en 0.x tant que la 1.0 n'est pas décidée).
+- À chaque push sur `main`, l'action met à jour une **Release PR** (bump + changelog générés).
+- **Merger la Release PR** publie la version : tag `vX.Y.Z`, GitHub Release, changelog committé.
+
+La version vit dans `.release-please-manifest.json` et est propagée automatiquement vers
+`Directory.Build.props` (assemblies .NET, exposée sur `GET /version` et dans les logs)
+et `SevenSigils.Frontend/package.json` (affichée dans le footer via Vite).
 
 ### Crédits
 

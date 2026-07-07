@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Difficulty, GameMode } from '../../domain/models/types'
 import type { HighscoreStore } from '../../domain/ports'
-import { APP_VERSION } from '../../version'
+import { APP_VERSION_LABEL } from '../../version'
 import { HighscoreTable } from './HighscoreTable'
 
 interface StartScreenProps {
@@ -31,7 +31,7 @@ export function StartScreen({
 
   return (
     <section className="card intro-card" aria-labelledby="title">
-      <p className="eyebrow">Seven Sigils — {APP_VERSION}</p>
+      <p className="eyebrow">Seven Sigils — {APP_VERSION_LABEL}</p>
       <h1 id="title">Quiz des blasons de Westeros et d'Essos</h1>
       <p className="intro-text">
         À chaque manche, identifie le blason correct parmi 4 maisons.

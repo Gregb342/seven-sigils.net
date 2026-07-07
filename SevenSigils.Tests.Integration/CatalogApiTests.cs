@@ -87,6 +87,32 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFactory>
     private sealed record BlazonBody(string Id, string FamilySlug, string FamilyLabel);
 }
 
+// ── Tests — Version ───────────────────────────────────────────────────────────
+
+public sealed class VersionApiTests : IClassFixture<CatalogApiFactory>
+{
+    private readonly CatalogApiFactory _factory;
+
+    public VersionApiTests(CatalogApiFactory factory)
+    {
+        _factory = factory;
+    }
+
+    [Fact]
+    public async Task GetVersion_ShouldReturnSemVer_Anonymously()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/version");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<VersionBody>();
+        body!.Version.Should().MatchRegex(@"^\d+\.\d+\.\d+$");
+    }
+
+    private sealed record VersionBody(string Version);
+}
+
 // ── Tests — Admin ─────────────────────────────────────────────────────────────
 
 public sealed class AdminApiTests : IClassFixture<CatalogApiFactory>
