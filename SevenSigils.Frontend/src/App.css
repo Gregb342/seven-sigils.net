@@ -98,7 +98,7 @@
   line-height: 1;
 }
 
-.encyclopedia-letter-rail .ghost-btn[aria-current='page'] {
+.encyclopedia-letter-rail .ghost-btn[aria-pressed='true'] {
   border-color: var(--accent-1);
   background: color-mix(in srgb, var(--accent-1) 12%, transparent);
 }

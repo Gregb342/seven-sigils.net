@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { Blazon } from '../../domain/models/types'
 
 interface EncyclopediaScreenProps {
@@ -25,10 +25,14 @@ function getSectionKey(label: string): string {
 
 export function EncyclopediaScreen({ entries, loading, error, onBack }: EncyclopediaScreenProps) {
   const [query, setQuery] = useState('')
+  // La lettre est un filtre : cliquer W n'affiche QUE les maisons en W
+  // (re-cliquer désactive). Plus de saut de page approximatif qui mélangeait
+  // la fin d'une lettre avec le début de la suivante.
+  const [activeLetter, setActiveLetter] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const pageSize = 4
 
-  const filtered = useMemo(() => {
+  const queryFiltered = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('fr')
     if (!normalizedQuery) return entries
     return entries.filter((entry) => {
@@ -39,28 +43,36 @@ export function EncyclopediaScreen({ entries, loading, error, onBack }: Encyclop
     })
   }, [entries, query])
 
-  useEffect(() => {
+  // Lettres proposées : celles présentes dans les résultats de la recherche.
+  const availableLetters = useMemo(() => {
+    const letters = new Set(queryFiltered.map((entry) => getSectionKey(entry.familyLabel)))
+    return [...letters].sort((a, b) => a.localeCompare(b, 'fr'))
+  }, [queryFiltered])
+
+  const filtered = useMemo(
+    () =>
+      activeLetter === null
+        ? queryFiltered
+        : queryFiltered.filter((entry) => getSectionKey(entry.familyLabel) === activeLetter),
+    [queryFiltered, activeLetter],
+  )
+
+  // Les resets de page se font dans les handlers (pas d'effet → pas de re-rendu en cascade).
+  const changeQuery = (value: string) => {
+    setQuery(value)
+    setActiveLetter(null)
     setPage(1)
-  }, [query, entries])
+  }
+
+  const toggleLetter = (letter: string) => {
+    setActiveLetter((current) => (current === letter ? null : letter))
+    setPage(1)
+  }
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, totalPages)
   const pageStart = (safePage - 1) * pageSize
   const paginated = filtered.slice(pageStart, pageStart + pageSize)
-
-  const letterToFirstIndex = useMemo(() => {
-    const map = new Map<string, number>()
-    filtered.forEach((entry, index) => {
-      const key = getSectionKey(entry.familyLabel)
-      if (!map.has(key)) map.set(key, index)
-    })
-    return map
-  }, [filtered])
-
-  const availableLetters = useMemo(
-    () => [...letterToFirstIndex.keys()].sort((a, b) => a.localeCompare(b, 'fr')),
-    [letterToFirstIndex],
-  )
 
   const sections = useMemo(() => {
     const grouped = new Map<string, Blazon[]>()
@@ -90,7 +102,7 @@ export function EncyclopediaScreen({ entries, loading, error, onBack }: Encyclop
         <input
           type="search"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => changeQuery(event.target.value)}
           placeholder="Ex : stark, lannister..."
           aria-label="Rechercher un blason"
         />
@@ -101,7 +113,10 @@ export function EncyclopediaScreen({ entries, loading, error, onBack }: Encyclop
 
       {!loading && !error && (
         <>
-          <p className="encyclopedia-count">{filtered.length} résultat(s)</p>
+          <p className="encyclopedia-count">
+            {filtered.length} résultat(s)
+            {activeLetter !== null && ` — lettre ${activeLetter}`}
+          </p>
 
           {filtered.length === 0 && <p>Aucun blason ne correspond à cette recherche.</p>}
 
@@ -180,25 +195,31 @@ export function EncyclopediaScreen({ entries, loading, error, onBack }: Encyclop
                 </div>
 
                 {availableLetters.length > 1 && (
-                  <nav className="encyclopedia-letter-rail" aria-label="Ascenseur alphabétique">
-                    {availableLetters.map((letter) => {
-                      const firstIndex = letterToFirstIndex.get(letter) ?? 0
-                      const targetPage = Math.floor(firstIndex / pageSize) + 1
-                      const isActivePage = targetPage === safePage
-
-                      return (
-                        <button
-                          key={letter}
-                          type="button"
-                          className="ghost-btn"
-                          aria-label={`Aller à la lettre ${letter}`}
-                          aria-current={isActivePage ? 'page' : undefined}
-                          onClick={() => setPage(targetPage)}
-                        >
-                          {letter}
-                        </button>
-                      )
-                    })}
+                  <nav className="encyclopedia-letter-rail" aria-label="Filtre alphabétique">
+                    <button
+                      type="button"
+                      className="ghost-btn"
+                      aria-label="Afficher toutes les lettres"
+                      aria-pressed={activeLetter === null}
+                      onClick={() => {
+                        setActiveLetter(null)
+                        setPage(1)
+                      }}
+                    >
+                      Tout
+                    </button>
+                    {availableLetters.map((letter) => (
+                      <button
+                        key={letter}
+                        type="button"
+                        className="ghost-btn"
+                        aria-label={`Filtrer sur la lettre ${letter}`}
+                        aria-pressed={activeLetter === letter}
+                        onClick={() => toggleLetter(letter)}
+                      >
+                        {letter}
+                      </button>
+                    ))}
                   </nav>
                 )}
               </div>
