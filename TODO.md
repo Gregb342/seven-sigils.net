@@ -1,5 +1,15 @@
 # TODO — points connus, reportés volontairement
 
+## Mode compétitif — suites prévues
+
+1. **Défi du jour** (validé sur le principe) : même série de questions pour tous,
+   seedée par la date — nécessite une génération déterministe côté backend
+   (IRandomProvider seedable + endpoint dédié).
+2. Sons arcade Web Audio (écartés de la v1, envisageables plus tard).
+3. Titres de rang (Mestre de la Citadelle…) : encore en dur dans le frontend
+   (`resources/quotes.ts`) — seules les citations sont éditables via la citadel.
+   Rendre les titres éditables si le besoin se présente.
+
 ## Back-office : upload des images de blasons
 
 Les PNG vivent dans `SevenSigils.Frontend/public/blazons/` (buildés dans

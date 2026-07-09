@@ -8,5 +8,6 @@ public sealed class MongoDbOptions
     public string DatabaseName { get; set; } = "sevensigils";
     public string BlazonCollection { get; set; } = "blazons";
     public string UserCollection { get; set; } = "users";
+    public string QuoteCollection { get; set; } = "quotes";
     public bool SeedOnStartup { get; set; } = true;
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { Difficulty, GameMode, SessionSnapshot } from '../../domain/models/types'
+import type { GameSettings, SessionSnapshot } from '../../domain/models/types'
 import { QuizGameService } from '../../application/usecases/quizGameService'
 import { LocalStorageBestScoreStore } from '../../infrastructure/services/LocalStorageBestScoreStore'
 import type { QuizRepository } from '../../domain/ports'
@@ -14,11 +14,11 @@ export function useQuizController(quizRepo: QuizRepository) {
 
   const actions = useMemo(
     () => ({
-      start: async (mode: GameMode, difficulty: Difficulty, fixedRounds: number) => {
+      start: async (settings: GameSettings) => {
         setError(null)
         setLoading(true)
         try {
-          const next = await service.start({ mode, difficulty, fixedRounds })
+          const next = await service.start(settings)
           setSnapshot({ ...next })
         } catch (e) {
           setError(e instanceof Error ? e.message : 'Erreur inconnue')
@@ -26,8 +26,16 @@ export function useQuizController(quizRepo: QuizRepository) {
           setLoading(false)
         }
       },
-      answer: (option: string) => {
-        const next = service.answer(option)
+      answer: (option: string, elapsedMs = 0) => {
+        const next = service.answer(option, elapsedMs)
+        setSnapshot({ ...next })
+      },
+      timeout: () => {
+        const next = service.timeout()
+        setSnapshot({ ...next })
+      },
+      useHint: () => {
+        const next = service.useHint()
         setSnapshot({ ...next })
       },
       nextRound: async () => {
