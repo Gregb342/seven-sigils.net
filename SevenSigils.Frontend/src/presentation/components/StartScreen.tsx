@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { Difficulty, GameMode, GameSettings, GameType } from '../../domain/models/types'
 import type { CompetitiveScoreStore, HighscoreStore } from '../../domain/ports'
 import {
@@ -47,15 +47,16 @@ export function StartScreen({
   const maxFixedRounds = isCompetitive ? MAX_ROUNDS : difficulty === 'easy' ? 30 : 40
   const minFixedRounds = isCompetitive ? MIN_ROUNDS : 5
 
-  useEffect(() => {
-    setFixedRounds((current) => Math.min(current, maxFixedRounds))
-  }, [maxFixedRounds])
+  // Valeur dérivée au rendu plutôt que corrigée après coup dans un effet
+  // (règle react-hooks set-state-in-effect) : changer de mode/difficulté
+  // re-clampe instantanément, sans re-rendu en cascade.
+  const effectiveFixedRounds = Math.max(minFixedRounds, Math.min(fixedRounds, maxFixedRounds))
 
   const settings: GameSettings = {
     gameType,
     mode: isCompetitive ? 'fixed' : mode,
     difficulty,
-    fixedRounds,
+    fixedRounds: effectiveFixedRounds,
     timerSeconds,
   }
 
@@ -131,7 +132,7 @@ export function StartScreen({
             type="number"
             min={minFixedRounds}
             max={maxFixedRounds}
-            value={fixedRounds}
+            value={effectiveFixedRounds}
             onChange={(event) => {
               const parsed = Number.parseInt(event.target.value, 10) || OFFICIAL_ROUNDS
               setFixedRounds(Math.max(minFixedRounds, Math.min(maxFixedRounds, parsed)))
