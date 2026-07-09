@@ -87,14 +87,32 @@ public sealed class BlazonSeeder
                     Value = h.Value ?? string.Empty
                 })
                 .ToList(),
-            Attribution = new AttributionDocument
-            {
-                Author = "Evrach",
-                SourcePageUrl = houseUrl,
-                LicenseLabel = "CC BY-SA 4.0",
-                LicenseUrl = "https://creativecommons.org/licenses/by-sa/4.0/",
-                Notes = "sauf mention contraire"
-            }
+            // L'export (GET /api/v1/admin/blazons/export) inclut l'attribution :
+            // si le JSON en fournit une, elle est honorée (fidélité de la
+            // sauvegarde Mongo-canonique) ; sinon, défauts historiques du projet.
+            Attribution = entry.Attribution is null
+                ? new AttributionDocument
+                {
+                    Author = "Evrach",
+                    SourcePageUrl = houseUrl,
+                    LicenseLabel = "CC BY-SA 4.0",
+                    LicenseUrl = "https://creativecommons.org/licenses/by-sa/4.0/",
+                    Notes = "sauf mention contraire"
+                }
+                : new AttributionDocument
+                {
+                    Author = entry.Attribution.Author,
+                    SourcePageUrl = string.IsNullOrWhiteSpace(entry.Attribution.SourcePageUrl)
+                        ? houseUrl
+                        : entry.Attribution.SourcePageUrl,
+                    LicenseLabel = string.IsNullOrWhiteSpace(entry.Attribution.LicenseLabel)
+                        ? "CC BY-SA 4.0"
+                        : entry.Attribution.LicenseLabel,
+                    LicenseUrl = string.IsNullOrWhiteSpace(entry.Attribution.LicenseUrl)
+                        ? "https://creativecommons.org/licenses/by-sa/4.0/"
+                        : entry.Attribution.LicenseUrl,
+                    Notes = entry.Attribution.Notes
+                }
         };
     }
 
@@ -127,6 +145,16 @@ public sealed class BlazonSeeder
         public bool? IncludeInHard { get; set; }
         public string? HousePageUrl { get; set; }
         public List<BlazonHint>? Hints { get; set; }
+        public BlazonAttribution? Attribution { get; set; }
+    }
+
+    private sealed class BlazonAttribution
+    {
+        public string? Author { get; set; }
+        public string? SourcePageUrl { get; set; }
+        public string? LicenseLabel { get; set; }
+        public string? LicenseUrl { get; set; }
+        public string? Notes { get; set; }
     }
 
     private sealed class BlazonHint
