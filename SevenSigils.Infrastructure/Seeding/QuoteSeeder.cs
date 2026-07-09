@@ -37,7 +37,21 @@ public sealed class QuoteSeeder
         _logger = logger;
     }
 
+    private static readonly (string Tier, string Title)[] DefaultTitles =
+    [
+        (QuoteTiers.Legendary, "Mestre de la Citadelle"),
+        (QuoteTiers.Strong, "Main du Roi"),
+        (QuoteTiers.Average, "Frère juré de la Garde de Nuit"),
+        (QuoteTiers.Grim, "Marcheur d’hiver"),
+    ];
+
     public async Task SeedAsync(CancellationToken cancellationToken = default)
+    {
+        await SeedQuotesAsync(cancellationToken);
+        await SeedTitlesAsync(cancellationToken);
+    }
+
+    private async Task SeedQuotesAsync(CancellationToken cancellationToken)
     {
         var existing = await _repository.GetAllAsync(cancellationToken);
         if (existing.Count > 0)
@@ -54,5 +68,22 @@ public sealed class QuoteSeeder
         }
 
         _logger.LogInformation("Seeded {Count} competitive quotes into MongoDB.", Defaults.Length);
+    }
+
+    private async Task SeedTitlesAsync(CancellationToken cancellationToken)
+    {
+        var existing = await _repository.GetTierTitlesAsync(cancellationToken);
+        if (existing.Count > 0)
+        {
+            _logger.LogInformation("Tier titles already present ({Count}) — skipping seed.", existing.Count);
+            return;
+        }
+
+        foreach (var (tier, title) in DefaultTitles)
+        {
+            await _repository.UpsertTierTitleAsync(tier, title, cancellationToken);
+        }
+
+        _logger.LogInformation("Seeded {Count} tier titles into MongoDB.", DefaultTitles.Length);
     }
 }

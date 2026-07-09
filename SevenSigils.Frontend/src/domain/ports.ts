@@ -23,9 +23,15 @@ export interface HighscoreStore {
   getLastPseudo(): string
 }
 
+/** Contenu des écrans de fin servi par l'API : titres de rang et citations par palier. */
+export interface TierContent {
+  titles: Partial<Record<CompetitiveTier, string>>
+  quotesByTier: Partial<Record<CompetitiveTier, string[]>>
+}
+
 export interface QuotesRepository {
-  /** Citations de fin de partie groupées par palier (peut être partiel ou vide). */
-  fetchQuotesByTier(): Promise<Partial<Record<CompetitiveTier, string[]>>>
+  /** Peut être partiel ou vide — le frontend garde ses fallbacks embarqués. */
+  fetchTierContent(): Promise<TierContent>
 }
 
 export interface CompetitiveScoreStore {

@@ -21,18 +21,61 @@ public sealed class QuotesApiTests : IClassFixture<QuotesApiFactory>
         _factory = factory;
     }
 
-    // Lecture publique : le frontend consomme les citations sans compte.
+    // Lecture publique : le frontend consomme titres et citations sans compte.
     [Fact]
-    public async Task GetAll_ShouldReturnQuotes_WhenNotAuthenticated()
+    public async Task GetAll_ShouldReturnTitlesAndQuotes_WhenNotAuthenticated()
     {
         _factory.SeedQuote(new CompetitiveQuote("q-read", QuoteTiers.Grim, "La nuit est sombre."));
+        _factory.SeedTitle(QuoteTiers.Grim, "Marcheur d’hiver");
         var client = _factory.CreateClient();
 
         var response = await client.GetAsync("/api/v1/quotes");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<List<QuoteBody>>();
-        body.Should().Contain(q => q.Id == "q-read" && q.Tier == "grim");
+        var body = await response.Content.ReadFromJsonAsync<QuotesBody>();
+        body!.Quotes.Should().Contain(q => q.Id == "q-read" && q.Tier == "grim");
+        body.Titles.Should().ContainKey("grim").WhoseValue.Should().Be("Marcheur d’hiver");
+    }
+
+    [Fact]
+    public async Task UpdateTitle_ShouldReturn401_WhenNotAuthenticated()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.PutAsJsonAsync("/api/v1/admin/quotes/titles/legendary", new
+        {
+            title = "Tentative anonyme"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task UpdateTitle_ShouldReturn400_WhenTierIsUnknown()
+    {
+        var client = _factory.CreateAdminClient();
+
+        var response = await client.PutAsJsonAsync("/api/v1/admin/quotes/titles/nightmare", new
+        {
+            title = "Palier inexistant"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task UpdateTitle_ShouldPersist_WhenAdmin()
+    {
+        var client = _factory.CreateAdminClient();
+
+        var put = await client.PutAsJsonAsync("/api/v1/admin/quotes/titles/legendary", new
+        {
+            title = "Grand Mestre"
+        });
+        put.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var body = await client.GetFromJsonAsync<QuotesBody>("/api/v1/quotes");
+        body!.Titles.Should().ContainKey("legendary").WhoseValue.Should().Be("Grand Mestre");
     }
 
     [Fact]
@@ -119,6 +162,7 @@ public sealed class QuotesApiTests : IClassFixture<QuotesApiFactory>
     }
 
     private sealed record QuoteBody(string Id, string Tier, string Text);
+    private sealed record QuotesBody(Dictionary<string, string> Titles, List<QuoteBody> Quotes);
 }
 
 // ── Factory ───────────────────────────────────────────────────────────────────
@@ -128,6 +172,8 @@ public sealed class QuotesApiFactory : WebApplicationFactory<Program>
     private readonly InMemoryQuoteRepository _quotes = new();
 
     public void SeedQuote(CompetitiveQuote quote) => _quotes.Seed(quote);
+
+    public void SeedTitle(string tier, string title) => _quotes.SeedTitle(tier, title);
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -173,8 +219,20 @@ public sealed class QuotesApiFactory : WebApplicationFactory<Program>
 internal sealed class InMemoryQuoteRepository : IQuoteRepository
 {
     private readonly List<CompetitiveQuote> _store = [];
+    private readonly Dictionary<string, string> _titles = [];
 
     public void Seed(CompetitiveQuote quote) => _store.Add(quote);
+
+    public void SeedTitle(string tier, string title) => _titles[tier] = title;
+
+    public Task<IReadOnlyDictionary<string, string>> GetTierTitlesAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyDictionary<string, string>>(new Dictionary<string, string>(_titles));
+
+    public Task UpsertTierTitleAsync(string tier, string title, CancellationToken cancellationToken = default)
+    {
+        _titles[tier] = title;
+        return Task.CompletedTask;
+    }
 
     public Task<IReadOnlyList<CompetitiveQuote>> GetAllAsync(CancellationToken cancellationToken = default) =>
         Task.FromResult<IReadOnlyList<CompetitiveQuote>>([.. _store]);

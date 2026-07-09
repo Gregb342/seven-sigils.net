@@ -38,6 +38,11 @@ export interface AdminQuote {
   text: string
 }
 
+export interface AdminQuotesContent {
+  titles: Record<string, string>
+  quotes: AdminQuote[]
+}
+
 interface LoginResponse {
   accessToken: string
   email: string
@@ -87,8 +92,15 @@ export class CitadelApi {
     return this.client.post<AdminBlazon>('/api/v1/admin/blazons', payload)
   }
 
-  fetchQuotes(): Promise<AdminQuote[]> {
-    return this.client.get<AdminQuote[]>('/api/v1/quotes')
+  fetchQuotes(): Promise<AdminQuotesContent> {
+    return this.client.get<AdminQuotesContent>('/api/v1/quotes')
+  }
+
+  updateTierTitle(tier: string, title: string): Promise<{ tier: string; title: string }> {
+    return this.client.put<{ tier: string; title: string }>(
+      `/api/v1/admin/quotes/titles/${encodeURIComponent(tier)}`,
+      { title },
+    )
   }
 
   createQuote(tier: string, text: string): Promise<AdminQuote> {

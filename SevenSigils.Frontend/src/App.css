@@ -98,7 +98,7 @@
   line-height: 1;
 }
 
-.encyclopedia-letter-rail .ghost-btn[aria-current='page'] {
+.encyclopedia-letter-rail .ghost-btn[aria-pressed='true'] {
   border-color: var(--accent-1);
   background: color-mix(in srgb, var(--accent-1) 12%, transparent);
 }
@@ -491,6 +491,15 @@
 
   .encyclopedia-layout {
     grid-template-columns: 1fr;
+  }
+
+  /* Sur une colonne, le rail alphabétique passe au-dessus du contenu,
+     en ligne avec retour, au lieu d'une interminable colonne sous la liste. */
+  .encyclopedia-letter-rail {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    order: -1;
   }
 }
 

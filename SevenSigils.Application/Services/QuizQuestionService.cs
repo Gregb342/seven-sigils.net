@@ -37,6 +37,9 @@ public sealed class QuizQuestionService : IQuizQuestionService
         var target = PickRandom(unseen);
         var distractors = pool
             .Where(x => !string.Equals(x.FamilyLabel, target.FamilyLabel, StringComparison.OrdinalIgnoreCase))
+            // Les variantes d'une même maison partagent leur label : sans
+            // déduplication, une question peut proposer deux fois la même réponse.
+            .DistinctBy(x => x.FamilyLabel, StringComparer.OrdinalIgnoreCase)
             .OrderBy(_ => _randomProvider.NextDouble())
             .Take(OptionsCount - 1)
             .Select(x => x.FamilyLabel)

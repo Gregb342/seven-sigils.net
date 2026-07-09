@@ -10,11 +10,13 @@ namespace SevenSigils.Infrastructure.Repositories;
 public sealed class MongoDbQuoteRepository : IQuoteRepository
 {
     private readonly IMongoCollection<QuoteDocument> _collection;
+    private readonly IMongoCollection<TierTitleDocument> _titleCollection;
 
     public MongoDbQuoteRepository(IMongoClient mongoClient, IOptions<MongoDbOptions> options)
     {
         var database = mongoClient.GetDatabase(options.Value.DatabaseName);
         _collection = database.GetCollection<QuoteDocument>(options.Value.QuoteCollection);
+        _titleCollection = database.GetCollection<TierTitleDocument>(options.Value.TierTitleCollection);
     }
 
     public async Task<IReadOnlyList<CompetitiveQuote>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -54,6 +56,22 @@ public sealed class MongoDbQuoteRepository : IQuoteRepository
         var result = await _collection.DeleteOneAsync(x => x.Id == id, cancellationToken);
         return result.DeletedCount > 0;
     }
+
+    public async Task<IReadOnlyDictionary<string, string>> GetTierTitlesAsync(CancellationToken cancellationToken = default)
+    {
+        var documents = await _titleCollection
+            .Find(FilterDefinition<TierTitleDocument>.Empty)
+            .ToListAsync(cancellationToken);
+
+        return documents.ToDictionary(d => d.Tier, d => d.Title);
+    }
+
+    public Task UpsertTierTitleAsync(string tier, string title, CancellationToken cancellationToken = default) =>
+        _titleCollection.ReplaceOneAsync(
+            x => x.Tier == tier,
+            new TierTitleDocument { Tier = tier, Title = title },
+            new ReplaceOptions { IsUpsert = true },
+            cancellationToken);
 
     private static CompetitiveQuote ToDomain(QuoteDocument doc) => new(doc.Id, doc.Tier, doc.Text);
 

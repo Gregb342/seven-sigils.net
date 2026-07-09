@@ -11,4 +11,8 @@ public interface IQuoteService
     Task<CompetitiveQuote> UpdateAsync(string id, string tier, string text, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(string id, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<string, string>> GetTierTitlesAsync(CancellationToken cancellationToken = default);
+
+    Task UpdateTierTitleAsync(string tier, string title, CancellationToken cancellationToken = default);
 }

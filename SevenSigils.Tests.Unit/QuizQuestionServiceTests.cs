@@ -107,6 +107,44 @@ public sealed class QuizQuestionServiceTests
     }
 
     [Fact]
+    public async Task CreateQuestionAsync_ShouldNeverProposeDuplicateOptions_WhenPoolHasLabelVariants()
+    {
+        // stark et stark-alt partagent le label "Stark" : les 4 options doivent
+        // rester distinctes même quand la cible n'est pas une des variantes.
+        var sut = BuildSut(new FakeRepository(
+            Create("stark", "Stark"),
+            Create("stark-alt", "Stark"),
+            Create("lannister", "Lannister"),
+            Create("targaryen", "Targaryen"),
+            Create("tyrell", "Tyrell")));
+        // La cible est forcée sur lannister : les variantes restent candidates distractrices.
+        string[] excluded = ["stark", "stark-alt", "targaryen", "tyrell"];
+
+        var result = await sut.CreateQuestionAsync(Difficulty.Easy, excluded);
+
+        result.Options.Should().HaveCount(4);
+        result.Options.Distinct(StringComparer.OrdinalIgnoreCase).Should().HaveCount(4);
+    }
+
+    [Fact]
+    public async Task CreateQuestionAsync_ShouldThrow_WhenDistractorLabelsCannotBeDistinct()
+    {
+        // Cible "Other" ; les 3 seuls distracteurs possibles partagent le même label :
+        // impossible de composer 4 options distinctes → erreur explicite plutôt
+        // qu'une question affichant trois fois la même réponse.
+        var sut = BuildSut(new FakeRepository(
+            Create("a1", "Same"),
+            Create("a2", "Same"),
+            Create("a3", "Same"),
+            Create("b", "Other")));
+
+        var act = () => sut.CreateQuestionAsync(Difficulty.Easy, ["a1", "a2", "a3"]);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*Unable to generate enough distractors*");
+    }
+
+    [Fact]
     public async Task CreateQuestionAsync_ShouldThrow_WhenCancellationRequested()
     {
         var cts = new CancellationTokenSource();
