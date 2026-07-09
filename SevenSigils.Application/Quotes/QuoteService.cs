@@ -40,4 +40,10 @@ public sealed class QuoteService : IQuoteService
         if (!deleted)
             throw new QuoteNotFoundException(id);
     }
+
+    public Task<IReadOnlyDictionary<string, string>> GetTierTitlesAsync(CancellationToken cancellationToken = default) =>
+        _repository.GetTierTitlesAsync(cancellationToken);
+
+    public Task UpdateTierTitleAsync(string tier, string title, CancellationToken cancellationToken = default) =>
+        _repository.UpsertTierTitleAsync(tier, title.Trim(), cancellationToken);
 }

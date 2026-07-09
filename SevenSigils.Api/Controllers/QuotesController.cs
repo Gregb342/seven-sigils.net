@@ -18,10 +18,13 @@ public sealed class QuotesController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType<IReadOnlyList<QuoteResponse>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<QuotesResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken = default)
     {
+        var titles = await _quoteService.GetTierTitlesAsync(cancellationToken);
         var quotes = await _quoteService.GetAllAsync(cancellationToken);
-        return Ok(quotes.Select(q => new QuoteResponse(q.Id, q.Tier, q.Text)).ToList());
+        return Ok(new QuotesResponse(
+            titles,
+            quotes.Select(q => new QuoteResponse(q.Id, q.Tier, q.Text)).ToList()));
     }
 }
