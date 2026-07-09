@@ -4,6 +4,21 @@ Ce fichier est généré automatiquement par [release-please](https://github.com
 à partir des messages de commits ([Conventional Commits](https://www.conventionalcommits.org/fr/)).
 Ne pas l'éditer à la main au-delà de cette introduction.
 
+## [0.3.0](https://github.com/Gregb342/seven-sigils.net/compare/v0.2.0...v0.3.0) (2026-07-09)
+
+
+### Features
+
+* **quotes:** editable rank titles served with the quotes ([#28](https://github.com/Gregb342/seven-sigils.net/issues/28)) ([4fcae63](https://github.com/Gregb342/seven-sigils.net/commit/4fcae6318c32148832d94d7e548c7c6a3d119c4a))
+
+
+### Bug Fixes
+
+* **encyclopedia:** full catalog loading and letter-rail filter ([#24](https://github.com/Gregb342/seven-sigils.net/issues/24)) ([810c3a3](https://github.com/Gregb342/seven-sigils.net/commit/810c3a3f4b71d0b1504ecbe98255e140862cd56f))
+* **lint:** derive the clamped rounds value at render in StartScreen ([#26](https://github.com/Gregb342/seven-sigils.net/issues/26)) ([2b17cce](https://github.com/Gregb342/seven-sigils.net/commit/2b17ccecdb02940aae88b9480c2d346af9f4596f))
+* **quiz:** never propose the same family label twice in the options ([#25](https://github.com/Gregb342/seven-sigils.net/issues/25)) ([83bf851](https://github.com/Gregb342/seven-sigils.net/commit/83bf8518e00fd28027658bb7e7a9e5cbb84a742a))
+* **seeder:** honor the attribution field when importing blazonDb.json ([#27](https://github.com/Gregb342/seven-sigils.net/issues/27)) ([dbe42d4](https://github.com/Gregb342/seven-sigils.net/commit/dbe42d4f0f6a73bcf1dd65c6a1af07b4a18d385e))
+
 ## [0.2.0](https://github.com/Gregb342/seven-sigils.net/compare/v0.1.0...v0.2.0) (2026-07-09)
 
 
