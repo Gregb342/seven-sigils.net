@@ -2,6 +2,6 @@
   <!-- Version unique du produit, propagée à tous les projets .NET.
        Bumpée automatiquement par release-please (annotation ci-dessous). -->
   <PropertyGroup>
-    <Version>0.2.0</Version> <!-- x-release-please-version -->
+    <Version>0.3.0</Version> <!-- x-release-please-version -->
   </PropertyGroup>
 </Project>
