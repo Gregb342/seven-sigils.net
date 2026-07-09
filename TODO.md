@@ -24,16 +24,12 @@ stockage, validation de fichiers, redimensionnement.
 hardcode Evrach / CC BY-SA 4.0. Si des attributions sont éditées via la
 citadel, améliorer le seeder pour honorer le champ si présent.
 
-## Encyclopédie : bug d'affichage de l'index alphabétique
+## Lint : 1 erreur react-hooks préexistante (set-state-in-effect)
 
-La barre de droite de l'encyclopédie (navigation par lettre de maison) a un
-souci d'affichage. À investiguer côté `EncyclopediaScreen.tsx` / CSS.
-
-## Lint : 2 erreurs react-hooks préexistantes (set-state-in-effect)
-
-`npm run lint` échoue sur `EncyclopediaScreen.tsx:43` et `StartScreen.tsx:29` :
-setState synchrone dans un useEffect (règle react-hooks 7). Corriger en
-clampant/dérivant la valeur au rendu ou dans le handler plutôt qu'en effet.
+`npm run lint` échoue sur `StartScreen.tsx` (clamp de fixedRounds dans un
+useEffect) : setState synchrone dans un effet (règle react-hooks 7).
+Corriger en clampant/dérivant la valeur au rendu ou dans le handler.
+(Celle d'EncyclopediaScreen a été résolue par le refactor du filtre alphabétique.)
 
 ## Quiz : doublons possibles dans les options
 
