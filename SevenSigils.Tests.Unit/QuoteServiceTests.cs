@@ -63,6 +63,17 @@ public sealed class QuoteServiceTests
         (await sut.GetAllAsync()).Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task UpdateTierTitleAsync_ShouldTrimAndUpsert()
+    {
+        var repo = new FakeQuoteRepository();
+        var sut = new QuoteService(repo);
+
+        await sut.UpdateTierTitleAsync(QuoteTiers.Legendary, "  Grand Mestre  ");
+
+        repo.Titles.Should().ContainKey(QuoteTiers.Legendary).WhoseValue.Should().Be("Grand Mestre");
+    }
+
     private sealed class FakeQuoteRepository(params CompetitiveQuote[] seed) : IQuoteRepository
     {
         private readonly List<CompetitiveQuote> _store = [.. seed];
@@ -89,5 +100,16 @@ public sealed class QuoteServiceTests
 
         public Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default) =>
             Task.FromResult(_store.RemoveAll(q => q.Id == id) > 0);
+
+        public Dictionary<string, string> Titles { get; } = [];
+
+        public Task<IReadOnlyDictionary<string, string>> GetTierTitlesAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyDictionary<string, string>>(new Dictionary<string, string>(Titles));
+
+        public Task UpsertTierTitleAsync(string tier, string title, CancellationToken cancellationToken = default)
+        {
+            Titles[tier] = title;
+            return Task.CompletedTask;
+        }
     }
 }

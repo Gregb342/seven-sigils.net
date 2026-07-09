@@ -163,6 +163,7 @@ et suivent le pattern : `Blason-<slug>-2014-v01-256px.png`
 | `DELETE /api/v1/admin/blazons/{slug}` | Admin | ✅ |
 | `POST /api/v1/admin/quotes` | Admin | ✅ |
 | `PUT /api/v1/admin/quotes/{id}` | Admin | ✅ |
+| `PUT /api/v1/admin/quotes/titles/{tier}` | Admin | ✅ |
 | `DELETE /api/v1/admin/quotes/{id}` | Admin | ✅ |
 
 ---

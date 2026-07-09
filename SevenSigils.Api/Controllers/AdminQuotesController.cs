@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SevenSigils.Api.Contracts.Quotes;
 using SevenSigils.Application.Quotes;
+using SevenSigils.Domain.Models;
 
 namespace SevenSigils.Api.Controllers;
 
@@ -52,6 +53,31 @@ public sealed class AdminQuotesController : ControllerBase
         {
             return NotFound();
         }
+    }
+
+    // Le segment littéral "titles" prime sur la route paramétrée {id}.
+    [HttpPut("titles/{tier}")]
+    [ProducesResponseType<TierTitleResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> UpdateTitle(
+        [FromRoute] string tier,
+        [FromBody] SaveTierTitleRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!QuoteTiers.IsValid(tier))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Unknown tier",
+                Detail = $"Tier must be one of: {string.Join(", ", QuoteTiers.All)}.",
+                Status = StatusCodes.Status400BadRequest
+            });
+        }
+
+        await _quoteService.UpdateTierTitleAsync(tier, request.Title, cancellationToken);
+        return Ok(new TierTitleResponse(tier, request.Title.Trim()));
     }
 
     [HttpDelete("{id}")]

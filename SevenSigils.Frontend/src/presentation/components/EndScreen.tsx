@@ -73,21 +73,25 @@ function CompetitiveEnd({
   const tier = computeTier(snapshot.score, rounds)
   const official = isOfficialFormat(snapshot.settings)
 
-  // Fallback embarqué immédiat, remplacé par une citation servie par l'API si
-  // disponible (éditable via la citadel) — l'échec réseau est silencieux.
+  // Fallbacks embarqués immédiats, remplacés par le titre et une citation servis
+  // par l'API si disponibles (éditables via la citadel) — l'échec réseau est silencieux.
   const [quote, setQuote] = useState(() => pickQuote(tier))
+  const [tierTitle, setTierTitle] = useState(() => TIER_CONTENT[tier].title)
   useEffect(() => {
     let cancelled = false
     quotesRepository
-      .fetchQuotesByTier()
-      .then((byTier) => {
-        const pool = byTier[tier]
-        if (!cancelled && pool && pool.length > 0) {
+      .fetchTierContent()
+      .then((content) => {
+        if (cancelled) return
+        const pool = content.quotesByTier[tier]
+        if (pool && pool.length > 0) {
           setQuote(pool[Math.floor(Math.random() * pool.length)])
         }
+        const title = content.titles[tier]
+        if (title) setTierTitle(title)
       })
       .catch(() => {
-        // Le fallback local reste affiché.
+        // Les fallbacks locaux restent affichés.
       })
     return () => {
       cancelled = true
@@ -133,7 +137,7 @@ function CompetitiveEnd({
       <p className="eyebrow">
         Partie compétitive terminée <DifficultyChip difficulty={difficulty} />
       </p>
-      <p className="tier-title">{TIER_CONTENT[tier].title}</p>
+      <p className="tier-title">{tierTitle}</p>
       <h2>
         {snapshot.score} / {maxScore}
       </h2>

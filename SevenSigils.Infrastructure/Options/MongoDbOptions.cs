@@ -9,5 +9,6 @@ public sealed class MongoDbOptions
     public string BlazonCollection { get; set; } = "blazons";
     public string UserCollection { get; set; } = "users";
     public string QuoteCollection { get; set; } = "quotes";
+    public string TierTitleCollection { get; set; } = "tierTitles";
     public bool SeedOnStartup { get; set; } = true;
 }

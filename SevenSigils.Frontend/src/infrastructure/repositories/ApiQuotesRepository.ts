@@ -1,4 +1,4 @@
-import type { QuotesRepository } from '../../domain/ports'
+import type { QuotesRepository, TierContent } from '../../domain/ports'
 import type { CompetitiveTier } from '../../domain/competitiveScoring'
 import type { ApiClient } from '../api/apiClient'
 
@@ -8,7 +8,16 @@ interface ApiQuote {
   text: string
 }
 
+interface ApiQuotesResponse {
+  titles: Record<string, string>
+  quotes: ApiQuote[]
+}
+
 const TIERS: readonly CompetitiveTier[] = ['legendary', 'strong', 'average', 'grim']
+
+function isTier(value: string): value is CompetitiveTier {
+  return TIERS.includes(value as CompetitiveTier)
+}
 
 export class ApiQuotesRepository implements QuotesRepository {
   private readonly client: ApiClient
@@ -17,14 +26,20 @@ export class ApiQuotesRepository implements QuotesRepository {
     this.client = client
   }
 
-  async fetchQuotesByTier(): Promise<Partial<Record<CompetitiveTier, string[]>>> {
-    const quotes = await this.client.get<ApiQuote[]>('/api/v1/quotes')
-    const grouped: Partial<Record<CompetitiveTier, string[]>> = {}
-    for (const quote of quotes) {
-      if (!TIERS.includes(quote.tier as CompetitiveTier) || quote.text.trim() === '') continue
-      const tier = quote.tier as CompetitiveTier
-      grouped[tier] = [...(grouped[tier] ?? []), quote.text]
+  async fetchTierContent(): Promise<TierContent> {
+    const response = await this.client.get<ApiQuotesResponse>('/api/v1/quotes')
+
+    const titles: TierContent['titles'] = {}
+    for (const [tier, title] of Object.entries(response.titles ?? {})) {
+      if (isTier(tier) && title.trim() !== '') titles[tier] = title
     }
-    return grouped
+
+    const quotesByTier: TierContent['quotesByTier'] = {}
+    for (const quote of response.quotes ?? []) {
+      if (!isTier(quote.tier) || quote.text.trim() === '') continue
+      quotesByTier[quote.tier] = [...(quotesByTier[quote.tier] ?? []), quote.text]
+    }
+
+    return { titles, quotesByTier }
   }
 }
