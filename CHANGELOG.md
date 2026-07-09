@@ -4,6 +4,14 @@ Ce fichier est généré automatiquement par [release-please](https://github.com
 à partir des messages de commits ([Conventional Commits](https://www.conventionalcommits.org/fr/)).
 Ne pas l'éditer à la main au-delà de cette introduction.
 
+## [0.2.0](https://github.com/Gregb342/seven-sigils.net/compare/v0.1.0...v0.2.0) (2026-07-09)
+
+
+### Features
+
+* **competitive:** timed competitive mode with arcade scoring and local rankings ([2c98b2a](https://github.com/Gregb342/seven-sigils.net/commit/2c98b2a198631cc0e58c85d46810b83952414f64))
+* **quotes:** end-screen quotes editable from the citadel ([123915c](https://github.com/Gregb342/seven-sigils.net/commit/123915cf440f884c0fa47659bd6ddc801a94ddea))
+
 ## 0.1.0 (2026-07-07)
 
 Version initiale — refonte fullstack de [`heraldik_of_the_watch`](https://github.com/Gregb342/heraldik_of_the_watch)
