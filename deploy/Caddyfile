@@ -1,0 +1,9 @@
+# SITE_ADDRESS vient du .env :
+#  - "seven-sigils.net, www.seven-sigils.net" → HTTPS Let's Encrypt automatique
+#  - "http://1.2.3.4" → HTTP simple sur l'IP (avant d'avoir le domaine)
+{$SITE_ADDRESS}
+
+encode gzip
+
+# nginx (frontend) sert la SPA et proxifie déjà /api vers l'API en interne.
+reverse_proxy frontend:80

@@ -1,0 +1,99 @@
+# Déploiement continu : merge dans main → tests → images GHCR → SSH sur le VPS.
+#
+# Secrets requis (Settings → Secrets and variables → Actions) :
+#   VPS_HOST     IP ou nom du serveur
+#   VPS_USER     utilisateur SSH (ex. deploy)
+#   VPS_SSH_KEY  clé privée SSH (la clé publique correspondante est dans
+#                ~/.ssh/authorized_keys du serveur)
+#
+# Le serveur doit contenir /opt/seven-sigils/{docker-compose.yml, Caddyfile, .env}
+# (voir deploy/README.md). Les images GHCR doivent être publiques (Settings du
+# package après le premier push) — sinon ajouter un docker login sur le serveur.
+name: deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      # Les tests d'intégration Quiz utilisent Testcontainers : Docker est
+      # disponible nativement sur les runners ubuntu-latest.
+      - run: dotnet test SevenSigils.slnx --configuration Release
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: SevenSigils.Frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: SevenSigils.Frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  build-and-push:
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: SevenSigils.Api/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/gregb342/seven-sigils-api:latest
+            ghcr.io/gregb342/seven-sigils-api:${{ github.sha }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: SevenSigils.Frontend
+          file: SevenSigils.Frontend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/gregb342/seven-sigils-frontend:latest
+            ghcr.io/gregb342/seven-sigils-frontend:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull des nouvelles images et redémarrage sur le VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/seven-sigils
+            docker compose pull
+            docker compose up -d
+            docker image prune -f

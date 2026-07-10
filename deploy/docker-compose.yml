@@ -1,0 +1,81 @@
+# ── Stack de production Seven Sigils ─────────────────────────────────────────
+# À copier sur le serveur dans /opt/seven-sigils/ avec le Caddyfile et un .env
+# (voir .env.example et le runbook deploy/README.md).
+#
+# Différences avec le compose de dev :
+#  - images tirées de GHCR (buildées par GitHub Actions), aucun build local ;
+#  - seul Caddy est exposé (80/443, TLS Let's Encrypt automatique) — ni Mongo,
+#    ni l'API, ni nginx ne sont joignables depuis l'extérieur ;
+#  - les variables sensibles sont exigées (syntaxe :?) : pas de valeur par
+#    défaut qui traîne, le démarrage échoue si le .env est incomplet.
+
+services:
+
+  mongodb:
+    image: mongo:7.0
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  api:
+    image: ghcr.io/gregb342/seven-sigils-api:latest
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - MongoDb__ConnectionString=mongodb://mongodb:27017
+      - MongoDb__DatabaseName=sevensigils
+      - MongoDb__BlazonCollection=blazons
+      - MongoDb__UserCollection=users
+      - MongoDb__QuoteCollection=quotes
+      - MongoDb__TierTitleCollection=tierTitles
+      - MongoDb__SeedOnStartup=true
+      - Jwt__Key=${JWT_KEY:?JWT_KEY manquant dans .env}
+      - Jwt__Issuer=SevenSigils
+      - Jwt__Audience=SevenSigils
+      - Jwt__ExpiryMinutes=60
+      - Cors__FrontendOrigin=${SITE_ORIGIN:?SITE_ORIGIN manquant dans .env}
+      - Admin__Email=${ADMIN_EMAIL:-}
+      - Admin__Password=${ADMIN_PASSWORD:-}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  frontend:
+    image: ghcr.io/gregb342/seven-sigils-frontend:latest
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      - SITE_ADDRESS=${SITE_ADDRESS:?SITE_ADDRESS manquant dans .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  mongo_data:
+  caddy_data:
+  caddy_config:

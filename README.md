@@ -168,6 +168,12 @@ et suivent le pattern : `Blason-<slug>-2014-v01-256px.png`
 
 ---
 
+### Déploiement
+
+Production : VPS + Docker Compose + Caddy (HTTPS automatique), déployée en
+continu par GitHub Actions à chaque merge dans `main` (tests → images GHCR →
+SSH). Runbook complet : [deploy/README.md](deploy/README.md).
+
 ### Versionning et releases
 
 Le versionning (SemVer `x.y.z`, actuellement `0.x` = beta) et le [CHANGELOG](CHANGELOG.md)
