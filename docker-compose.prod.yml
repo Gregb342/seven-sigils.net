@@ -1,0 +1,88 @@
+# docker-compose.prod.yml — Production sur le VPS (sevensigils.fantasy-tools.fr)
+#
+# Copié sur le serveur dans /opt/apps/sevensigils/docker-compose.yml par le
+# workflow .github/workflows/deploy.yml. Les images sont construites par
+# GitHub Actions et publiées sur GHCR : rien n'est compilé sur le VPS.
+#
+# Différences avec docker-compose.yml (dev) :
+#   - images pré-construites (IMAGE_TAG) au lieu de `build:` ;
+#   - aucun port publié : seul le reverse proxy Caddy (réseau externe `web`)
+#     joint le frontend, MongoDB et l'API restent sur le réseau interne ;
+#   - MongoDB avec authentification ;
+#   - aucune valeur par défaut pour les secrets : le démarrage échoue si le
+#     fichier .env du serveur est incomplet.
+#
+# Variables attendues dans /opt/apps/sevensigils/.env (jamais versionné) :
+#   MONGO_USER, MONGO_PASSWORD, JWT_KEY, ADMIN_EMAIL, ADMIN_PASSWORD
+#   IMAGE_TAG est fourni par le workflow au déploiement (défaut : latest).
+
+name: sevensigils
+
+services:
+
+  mongodb:
+    image: mongo:7.0
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:?MONGO_USER manquant dans .env}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:?MONGO_PASSWORD manquant dans .env}
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  api:
+    image: ghcr.io/gregb342/sevensigils-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - MongoDb__ConnectionString=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/?authSource=admin
+      - MongoDb__DatabaseName=sevensigils
+      - MongoDb__BlazonCollection=blazons
+      - MongoDb__UserCollection=users
+      - MongoDb__SeedOnStartup=true
+      - Jwt__Key=${JWT_KEY:?JWT_KEY manquant dans .env}
+      - Jwt__Issuer=SevenSigils
+      - Jwt__Audience=SevenSigils
+      - Jwt__ExpiryMinutes=60
+      - Cors__FrontendOrigin=https://sevensigils.fantasy-tools.fr
+      - Admin__Email=${ADMIN_EMAIL:-}
+      - Admin__Password=${ADMIN_PASSWORD:-}
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  frontend:
+    image: ghcr.io/gregb342/sevensigils-frontend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      internal:
+      web:
+        # Nom sous lequel Caddy joint le frontend (voir le Caddyfile du serveur).
+        aliases:
+          - sevensigils-frontend
+
+volumes:
+  mongo_data:
+
+networks:
+  internal:
+  web:
+    external: true

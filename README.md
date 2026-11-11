@@ -182,6 +182,16 @@ La version vit dans `.release-please-manifest.json` et est propagée automatique
 `Directory.Build.props` (assemblies .NET, exposée sur `GET /version` et dans les logs)
 et `SevenSigils.Frontend/package.json` (affichée dans le footer via Vite).
 
+### Déploiement
+
+En production sur **https://sevensigils.fantasy-tools.fr** (VPS Infomaniak, Ubuntu + Docker, reverse proxy Caddy pour le HTTPS).
+
+- **Merger la Release PR** construit les images (GitHub Actions → GHCR) puis les déploie sur le VPS en SSH (`.github/workflows/deploy.yml`, appelé par `release-please.yml`).
+- **Déploiement manuel** : onglet *Actions* → *deploy* → *Run workflow*.
+- La configuration de prod est dans `docker-compose.prod.yml` : aucun port publié (seul Caddy joint le frontend via le réseau Docker `web`), MongoDB authentifié.
+- Les secrets vivent uniquement dans `/opt/apps/sevensigils/.env` sur le serveur (modèle : `.env.prod.example`).
+- Secrets GitHub requis : `VPS_HOST`, `VPS_SSH_KEY`, `VPS_KNOWN_HOSTS`.
+
 ### Crédits
 
 Blasons fournis par [La Garde de Nuit](https://lagardedenuit.com) — licence **CC BY-SA 4.0**, sauf mention contraire.  
