@@ -1,6 +1,8 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using SevenSigils.Api.BackOffice;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
@@ -124,13 +126,25 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
+// Back-office désactivé (prod) : les contrôleurs auth/admin sont retirés, leurs
+// routes répondent 404. Lu sur app.Configuration (configuration finale, y compris
+// les surcharges de WebApplicationFactory) ; la liste des contrôleurs n'est
+// calculée qu'au premier routage, donc après cet ajout.
+var backOfficeEnabled = app.Configuration.GetValue($"{AdminSeedOptions.SectionName}:Enabled", true);
+if (!backOfficeEnabled)
+{
+    BackOfficeControllers.Remove(app.Services.GetRequiredService<ApplicationPartManager>());
+}
+
 // Fail-fast : hors Development, on refuse de démarrer avec la clé placeholder,
 // une clé vide ou une clé trop courte (HS256 exige au moins 256 bits = 32 octets).
 // Lecture via le DI (config finale) et non builder.Configuration : les surcharges
 // de WebApplicationFactory (tests) ne sont appliquées qu'au moment du Build().
 var effectiveJwtKey = app.Services
     .GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtOptions>>().Value.Key;
-if (!app.Environment.IsDevelopment()
+// Sans back-office, aucun jeton n'est émis ni accepté : la clé n'est pas requise.
+if (backOfficeEnabled
+    && !app.Environment.IsDevelopment()
     && (string.IsNullOrWhiteSpace(effectiveJwtKey)
         || effectiveJwtKey.StartsWith("CHANGE_ME", StringComparison.Ordinal)
         || Encoding.UTF8.GetByteCount(effectiveJwtKey) < 32))
@@ -174,8 +188,12 @@ if (app.Configuration.GetValue<bool?>("MongoDb:SeedOnStartup") != false)
 }
 
 // Sans Admin:Email / Admin:Password configurés, aucun compte n'est créé (le seeder loggue et passe).
-var adminSeeder = app.Services.GetRequiredService<AdminUserSeeder>();
-await adminSeeder.SeedAsync();
+// Sans back-office, aucun compte n'est créé du tout.
+if (backOfficeEnabled)
+{
+    var adminSeeder = app.Services.GetRequiredService<AdminUserSeeder>();
+    await adminSeeder.SeedAsync();
+}
 
 app.Run();
 

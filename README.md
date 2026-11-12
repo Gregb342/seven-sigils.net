@@ -114,7 +114,8 @@ npm run lint
 Pour une exécution sans Docker, une instance MongoDB sur `mongodb://localhost:27017` est nécessaire.  
 Avec Compass, utilisez l'URI : `mongodb://localhost:27017/`
 
-Au premier démarrage, l'API **seed automatiquement** la collection `blazons` depuis `SevenSigils.Api/data/blazonDb.json` si elle est vide.
+Au premier démarrage, l'API **seed automatiquement** la collection `blazons` depuis `SevenSigils.Api/data/blazonDb.json` si elle est vide
+(`MongoDb:SeedMode=IfEmpty`, défaut). En production, `MongoDb__SeedMode=Replace` remplace le contenu à chaque démarrage.
 
 #### Compte administrateur
 
@@ -130,6 +131,21 @@ ADMIN_PASSWORD=un-mot-de-passe-de-12-caracteres-minimum
 Le seed est idempotent : un compte existant n'est jamais modifié au redémarrage.
 Une configuration partielle (email sans mot de passe, mot de passe trop court…)
 fait échouer le démarrage plutôt que de créer un compte bancal.
+
+Le back-office n'existe qu'en **local** : en production, `Admin__Enabled=false`
+retire les routes `/api/v1/auth` et `/api/v1/admin` (404) et le frontend est
+construit sans la citadel (voir [Déploiement](#déploiement)).
+
+#### Modifier les données
+
+Le dépôt fait foi : la prod est resynchronisée depuis le code à chaque déploiement.
+
+1. En local, éditer les blasons dans la citadel (`/#citadel`).
+2. Exporter avec `GET /api/v1/admin/blazons/export` et remplacer `SevenSigils.Api/data/blazonDb.json`.
+3. Committer (`feat:` / `fix:`), puis merger la Release PR : la prod est mise à jour.
+
+Les citations et titres de rang de prod viennent de `SevenSigils.Infrastructure/Seeding/QuoteSeeder.cs` :
+on les modifie directement dans ce fichier (une édition faite dans la citadel locale ne part pas en prod).
 
 ---
 
@@ -153,11 +169,11 @@ et suivent le pattern : `Blason-<slug>-2014-v01-256px.png`
 | `GET /health` | Anonyme | ✅ |
 | `GET /version` | Anonyme | ✅ |
 | `GET /swagger` | Anonyme | ✅ (dev uniquement) |
-| `POST /api/v1/auth/login` | Anonyme (réservé admin) | ✅ |
+| `POST /api/v1/auth/login` | Anonyme (réservé admin, absent en prod) | ✅ |
 | `GET /api/v1/catalog` | Anonyme | ✅ |
 | `GET /api/v1/catalog/{slug}` | Anonyme | ✅ |
 | `GET /api/v1/quotes` | Anonyme | ✅ |
-| `GET /api/v1/admin/blazons/export` | Admin | ✅ |
+| `GET /api/v1/admin/blazons/export` | Admin (toutes les routes `admin` : absentes en prod) | ✅ |
 | `POST /api/v1/admin/blazons` | Admin | ✅ |
 | `PUT /api/v1/admin/blazons/{slug}` | Admin | ✅ |
 | `DELETE /api/v1/admin/blazons/{slug}` | Admin | ✅ |
@@ -189,7 +205,8 @@ En production sur **https://sevensigils.fantasy-tools.fr** (VPS Infomaniak, Ubun
 - **Merger la Release PR** construit les images (GitHub Actions → GHCR) puis les déploie sur le VPS en SSH (`.github/workflows/deploy.yml`, appelé par `release-please.yml`).
 - **Déploiement manuel** : onglet *Actions* → *deploy* → *Run workflow*.
 - La configuration de prod est dans `docker-compose.prod.yml` : aucun port publié (seul Caddy joint le frontend via le réseau Docker `web`), MongoDB authentifié.
-- Les secrets vivent uniquement dans `/opt/apps/sevensigils/.env` sur le serveur (modèle : `.env.prod.example`).
+- **Pas de back-office en prod** (`Admin__Enabled=false`, frontend construit avec `VITE_CITADEL_ENABLED=false`) et **base resynchronisée depuis le dépôt** à chaque démarrage (`MongoDb__SeedMode=Replace`).
+- Les secrets vivent uniquement dans `/opt/apps/sevensigils/.env` sur le serveur (modèle : `.env.prod.example`) : seulement l'accès MongoDB.
 - Secrets GitHub requis : `VPS_HOST`, `VPS_SSH_KEY`, `VPS_KNOWN_HOSTS`.
 
 ### Crédits

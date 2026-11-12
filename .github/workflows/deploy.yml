@@ -43,7 +43,7 @@ jobs:
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Tag des images
         id: tag
@@ -77,6 +77,9 @@ jobs:
           context: SevenSigils.Frontend
           file: SevenSigils.Frontend/Dockerfile
           platforms: linux/amd64
+          # Back-office absent en prod (Admin__Enabled=false côté API) : pas de citadel.
+          build-args: |
+            VITE_CITADEL_ENABLED=false
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}-frontend:${{ steps.tag.outputs.tag }}
@@ -92,7 +95,7 @@ jobs:
       name: production
       url: https://sevensigils.fantasy-tools.fr
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Configurer SSH
         env:

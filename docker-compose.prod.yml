@@ -9,11 +9,15 @@
 #   - aucun port publié : seul le reverse proxy Caddy (réseau externe `web`)
 #     joint le frontend, MongoDB et l'API restent sur le réseau interne ;
 #   - MongoDB avec authentification ;
+#   - pas de back-office : Admin__Enabled=false retire les routes /api/v1/auth
+#     et /api/v1/admin (404), et le frontend est construit sans la citadel ;
+#   - le dépôt Git fait foi : MongoDb__SeedMode=Replace resynchronise blasons,
+#     citations et titres à chaque démarrage (data/blazonDb.json, QuoteSeeder.cs) ;
 #   - aucune valeur par défaut pour les secrets : le démarrage échoue si le
 #     fichier .env du serveur est incomplet.
 #
 # Variables attendues dans /opt/apps/sevensigils/.env (jamais versionné) :
-#   MONGO_USER, MONGO_PASSWORD, JWT_KEY, ADMIN_EMAIL, ADMIN_PASSWORD
+#   MONGO_USER, MONGO_PASSWORD
 #   IMAGE_TAG est fourni par le workflow au déploiement (défaut : latest).
 
 name: sevensigils
@@ -48,15 +52,10 @@ services:
       - MongoDb__ConnectionString=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/?authSource=admin
       - MongoDb__DatabaseName=sevensigils
       - MongoDb__BlazonCollection=blazons
-      - MongoDb__UserCollection=users
       - MongoDb__SeedOnStartup=true
-      - Jwt__Key=${JWT_KEY:?JWT_KEY manquant dans .env}
-      - Jwt__Issuer=SevenSigils
-      - Jwt__Audience=SevenSigils
-      - Jwt__ExpiryMinutes=60
+      - MongoDb__SeedMode=Replace
+      - Admin__Enabled=false
       - Cors__FrontendOrigin=https://sevensigils.fantasy-tools.fr
-      - Admin__Email=${ADMIN_EMAIL:-}
-      - Admin__Password=${ADMIN_PASSWORD:-}
     networks:
       - internal
     healthcheck:
