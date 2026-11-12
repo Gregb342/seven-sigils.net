@@ -26,8 +26,12 @@ type HomeView = 'menu' | 'encyclopedia'
 // Back-office accessible via /#citadel ou /citadel (le fallback SPA de nginx sert
 // index.html pour les deux) — volontairement sans lien dans l'UI joueur.
 // Ce n'est pas une protection (l'API reste le vrai garde), juste de la discrétion.
+// En production, le back-office n'existe pas côté API (Admin:Enabled=false) : le
+// build est fait avec VITE_CITADEL_ENABLED=false et l'écran n'est jamais affiché.
+const citadelEnabled = import.meta.env.VITE_CITADEL_ENABLED !== 'false'
 const isCitadelLocation = () =>
-  window.location.hash === '#citadel' || window.location.pathname === '/citadel'
+  citadelEnabled &&
+  (window.location.hash === '#citadel' || window.location.pathname === '/citadel')
 
 function App() {
   const [isCitadel, setIsCitadel] = useState(isCitadelLocation)
