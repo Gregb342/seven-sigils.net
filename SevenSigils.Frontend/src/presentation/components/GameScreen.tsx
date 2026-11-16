@@ -175,7 +175,15 @@ export function GameScreen({
       <figure className="blazon-figure">
         <img
           src={question.blazon.imageUrl}
-          alt={`Blason de la maison ${question.blazon.familyLabel}`}
+          // Anti-spoiler : tant que l'image charge, le navigateur affiche le texte
+          // alternatif. Il reste neutre jusqu'à la réponse, et l'image est masquée
+          // (place conservée) tant qu'elle n'est pas chargée.
+          alt={
+            snapshot.answerLocked
+              ? `Blason de la maison ${question.blazon.familyLabel}`
+              : 'Blason à identifier'
+          }
+          className={imageReady ? undefined : 'is-loading'}
           ref={(node) => {
             // Image déjà en cache : onLoad peut ne jamais tirer, on vérifie ici.
             if (node?.complete) setImageReady(true)

@@ -315,6 +315,11 @@
   margin: 0 auto;
 }
 
+/* Image en cours de chargement : ni texte alternatif ni icône d'image cassée. */
+.blazon-figure img.is-loading {
+  visibility: hidden;
+}
+
 .blazon-figure figcaption {
   margin-top: 0.8rem;
   text-align: center;
