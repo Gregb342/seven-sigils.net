@@ -1,14 +1,21 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SevenSigils.Domain.Abstractions;
 using SevenSigils.Domain.Models;
+using SevenSigils.Infrastructure.Options;
 
 namespace SevenSigils.Infrastructure.Seeding;
 
 /// <summary>
-/// Seed initial des citations de fin de partie compétitive : si la collection est
-/// vide, elle est remplie avec les mêmes textes que le fallback embarqué dans le
-/// frontend (resources/quotes.ts). Ne touche jamais une collection non vide —
-/// les éditions faites via la citadel sont préservées (Mongo est canonique).
+/// Seed des citations de fin de partie compétitive et des titres de rang, avec
+/// les mêmes textes que le fallback embarqué dans le frontend (resources/quotes.ts).
+/// <list type="bullet">
+/// <item><see cref="SeedMode.IfEmpty"/> (dev) : ne touche jamais une collection non
+/// vide — les éditions faites via la citadel sont préservées.</item>
+/// <item><see cref="SeedMode.Replace"/> (prod) : le contenu est remplacé par les
+/// valeurs ci-dessous, qui font foi. Pour modifier une citation en prod, on modifie
+/// ce fichier.</item>
+/// </list>
 /// </summary>
 public sealed class QuoteSeeder
 {
@@ -29,11 +36,16 @@ public sealed class QuoteSeeder
     ];
 
     private readonly IQuoteRepository _repository;
+    private readonly SeedMode _mode;
     private readonly ILogger<QuoteSeeder> _logger;
 
-    public QuoteSeeder(IQuoteRepository repository, ILogger<QuoteSeeder> logger)
+    public QuoteSeeder(
+        IQuoteRepository repository,
+        IOptions<MongoDbOptions> mongoOptions,
+        ILogger<QuoteSeeder> logger)
     {
         _repository = repository;
+        _mode = mongoOptions.Value.SeedMode;
         _logger = logger;
     }
 
@@ -56,8 +68,16 @@ public sealed class QuoteSeeder
         var existing = await _repository.GetAllAsync(cancellationToken);
         if (existing.Count > 0)
         {
-            _logger.LogInformation("Quote collection already contains {Count} documents — skipping seed.", existing.Count);
-            return;
+            if (_mode == SeedMode.IfEmpty)
+            {
+                _logger.LogInformation("Quote collection already contains {Count} documents — skipping seed.", existing.Count);
+                return;
+            }
+
+            foreach (var quote in existing)
+                await _repository.DeleteAsync(quote.Id, cancellationToken);
+
+            _logger.LogInformation("Seed mode Replace: removed {Count} existing quotes.", existing.Count);
         }
 
         foreach (var (tier, text) in Defaults)
@@ -72,8 +92,9 @@ public sealed class QuoteSeeder
 
     private async Task SeedTitlesAsync(CancellationToken cancellationToken)
     {
+        // En mode Replace, l'upsert ci-dessous écrase chaque titre par sa valeur de référence.
         var existing = await _repository.GetTierTitlesAsync(cancellationToken);
-        if (existing.Count > 0)
+        if (existing.Count > 0 && _mode == SeedMode.IfEmpty)
         {
             _logger.LogInformation("Tier titles already present ({Count}) — skipping seed.", existing.Count);
             return;

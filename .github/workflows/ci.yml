@@ -1,0 +1,55 @@
+# Intégration continue : build + tests du backend .NET et du frontend, à chaque
+# pull request et à chaque push sur main. Les tests d'intégration démarrent un
+# vrai MongoDB via Testcontainers (Docker est disponible sur les runners GitHub).
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore SevenSigils.slnx
+
+      - name: Build
+        run: dotnet build SevenSigils.slnx --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test SevenSigils.slnx --no-build --configuration Release
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: SevenSigils.Frontend
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: SevenSigils.Frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build

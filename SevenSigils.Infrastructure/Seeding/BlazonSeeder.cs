@@ -12,6 +12,7 @@ public sealed class BlazonSeeder
 {
     private readonly IMongoCollection<BlazonDocument> _collection;
     private readonly string _jsonPath;
+    private readonly SeedMode _mode;
     private readonly ILogger<BlazonSeeder> _logger;
 
     public BlazonSeeder(
@@ -23,21 +24,44 @@ public sealed class BlazonSeeder
         var database = mongoClient.GetDatabase(mongoOptions.Value.DatabaseName);
         _collection = database.GetCollection<BlazonDocument>(mongoOptions.Value.BlazonCollection);
         _jsonPath = dataOptions.Value.JsonPath;
+        _mode = mongoOptions.Value.SeedMode;
         _logger = logger;
     }
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        var existing = await _collection.CountDocumentsAsync(
-            FilterDefinition<BlazonDocument>.Empty,
-            cancellationToken: cancellationToken);
-
-        if (existing > 0)
+        if (_mode == SeedMode.IfEmpty)
         {
-            _logger.LogInformation("Blazon collection already contains {Count} documents — skipping seed.", existing);
-            return;
+            var existing = await _collection.CountDocumentsAsync(
+                FilterDefinition<BlazonDocument>.Empty,
+                cancellationToken: cancellationToken);
+
+            if (existing > 0)
+            {
+                _logger.LogInformation("Blazon collection already contains {Count} documents — skipping seed.", existing);
+                return;
+            }
         }
 
+        // Le JSON est lu et validé AVANT de toucher la collection : un fichier
+        // absent ou invalide fait échouer le démarrage sans vider la base.
+        var docs = await LoadDocumentsAsync(cancellationToken);
+
+        if (_mode == SeedMode.Replace)
+        {
+            var deleted = await _collection.DeleteManyAsync(
+                FilterDefinition<BlazonDocument>.Empty,
+                cancellationToken);
+            _logger.LogInformation("Seed mode Replace: removed {Count} existing blazon documents.", deleted.DeletedCount);
+        }
+
+        await _collection.InsertManyAsync(docs, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Seeded {Count} blazon documents into MongoDB.", docs.Count);
+    }
+
+    private async Task<List<BlazonDocument>> LoadDocumentsAsync(CancellationToken cancellationToken)
+    {
         if (!File.Exists(_jsonPath))
         {
             _logger.LogError("Seed source not found at '{Path}'.", _jsonPath);
@@ -52,13 +76,9 @@ public sealed class BlazonSeeder
 
         var easySet = new HashSet<string>(document.EasyModeSlugs, StringComparer.OrdinalIgnoreCase);
 
-        var docs = document.Entries
+        return document.Entries
             .Select(kvp => MapToDocument(kvp.Key, kvp.Value, easySet))
             .ToList();
-
-        await _collection.InsertManyAsync(docs, cancellationToken: cancellationToken);
-
-        _logger.LogInformation("Seeded {Count} blazon documents into MongoDB.", docs.Count);
     }
 
     private static BlazonDocument MapToDocument(string slug, BlazonDbEntry entry, HashSet<string> easySet)

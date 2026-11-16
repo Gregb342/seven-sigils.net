@@ -6,6 +6,10 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 COPY . .
+# Back-office « citadel » : visible par défaut (dev), désactivé par le workflow
+# de déploiement (--build-arg VITE_CITADEL_ENABLED=false).
+ARG VITE_CITADEL_ENABLED=true
+ENV VITE_CITADEL_ENABLED=$VITE_CITADEL_ENABLED
 RUN npm run build
 
 # ── Runtime stage (nginx) ─────────────────────────────────────────────────────
