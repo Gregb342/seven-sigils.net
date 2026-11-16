@@ -30,6 +30,12 @@ export function CreditsFooter() {
           github.com/Gregb342
         </a>
       </p>
+      <p>
+        Un bug, une remarque ?{' '}
+        <a href="https://tally.so/r/7Rvba6" target="_blank" rel="noopener noreferrer">
+          Envoyer un feedback
+        </a>
+      </p>
       <p>Version : {APP_VERSION_LABEL}</p>
     </footer>
   )
